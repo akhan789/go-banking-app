@@ -16,9 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class AbstractHttpClient {
+public abstract class AbstractHttpClient {
 
-    protected static final String BASE_URL = "http://localhost:8000";
     protected HttpClient client;
     protected ObjectMapper objectMapper;
 
@@ -27,10 +26,12 @@ public class AbstractHttpClient {
         this.objectMapper = new ObjectMapper();
     }
 
+    protected abstract String getBaseUrl();
+
     protected <T> T sendPostRequest(String endpoint, Object requestBody, Class<T> responseType) throws Exception {
         String jsonRequestBody = objectMapper.writeValueAsString(requestBody);
 
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(BASE_URL + endpoint))
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(getBaseUrl() + endpoint))
                 .header("Content-Type", "application/json").POST(BodyPublishers.ofString(jsonRequestBody)).build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -53,7 +54,7 @@ public class AbstractHttpClient {
     }
 
     protected <T> T sendGetRequest(String endpoint, Class<T> responseType) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(BASE_URL + endpoint)).GET().build();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(getBaseUrl() + endpoint)).GET().build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 

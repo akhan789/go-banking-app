@@ -3,7 +3,6 @@ package com.payter.swingui.view;
 
 import java.awt.BorderLayout;
 
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
@@ -16,7 +15,7 @@ import com.payter.swingui.viewmodel.AuditLoggingViewModel;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class AuditLogView extends JPanel {
+public class AuditLogView extends AbstractView {
 
     private static final long serialVersionUID = 920288068313477109L;
 

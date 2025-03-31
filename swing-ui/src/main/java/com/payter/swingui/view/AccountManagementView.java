@@ -1,5 +1,4 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
-
 package com.payter.swingui.view;
 
 import java.awt.BorderLayout;
@@ -10,12 +9,11 @@ import java.awt.Insets;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
-import com.payter.swingui.viewmodel.AccountViewModel;
+import com.payter.swingui.viewmodel.AccountManagementViewModel;
 import com.payter.swingui.viewmodel.AccountViewModelException;
 
 /**
@@ -25,9 +23,9 @@ import com.payter.swingui.viewmodel.AccountViewModelException;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class AccountView extends JPanel {
+public class AccountManagementView extends AbstractView {
 
-    private static final long serialVersionUID = -2086328430711330651L;
+    private static final long serialVersionUID = -7079536813258363853L;
 
     private JTextField nameField = new JTextField(15);
     private JTextField depositField = new JTextField(15);
@@ -41,9 +39,9 @@ public class AccountView extends JPanel {
     private JButton reactivateBtn = new JButton("Reactivate");
     private JButton closeBtn = new JButton("Close");
 
-    private AccountViewModel accountVM;
+    private AccountManagementViewModel accountVM;
 
-    public AccountView(AccountViewModel accountVM) {
+    public AccountManagementView(AccountManagementViewModel accountVM) {
         this.accountVM = accountVM;
         setLayout(new BorderLayout());
 
@@ -149,9 +147,5 @@ public class AccountView extends JPanel {
                 showError(e.getMessage());
             }
         });
-    }
-
-    private void showError(String message) {
-        JOptionPane.showMessageDialog(this, message, "Invalid Input", JOptionPane.ERROR_MESSAGE);
     }
 }

@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.swingui.service;
 
-import com.payter.swingui.client.AccountHttpClient;
+import com.payter.swingui.client.AccountManagementHttpClient;
 import com.payter.swingui.model.Account;
 
 /**
@@ -11,32 +11,32 @@ import com.payter.swingui.model.Account;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class AccountService {
+public class AccountManagementService {
 
-    private AccountHttpClient accountHttpClient;
+    private AccountManagementHttpClient accountManagementHttpClient;
 
-    public AccountService() {
-        this.accountHttpClient = new AccountHttpClient();
+    public AccountManagementService() {
+        this.accountManagementHttpClient = new AccountManagementHttpClient();
     }
 
     public Account createAccount(String accountName, double initialBalance, String currency) {
         Account account = new Account(null, accountName, initialBalance, "ACTIVE", currency);
-        return accountHttpClient.createAccount(account);
+        return accountManagementHttpClient.createAccount(account);
     }
 
     public Account getAccount(String accountId) {
-        return accountHttpClient.getAccount(accountId);
+        return accountManagementHttpClient.getAccount(accountId);
     }
 
     public void suspendAccount(String accountId) {
-        accountHttpClient.suspendAccount(accountId);
+        accountManagementHttpClient.suspendAccount(accountId);
     }
 
     public void reactivateAccount(String accountId) {
-        accountHttpClient.reactivateAccount(accountId);
+        accountManagementHttpClient.reactivateAccount(accountId);
     }
 
     public void closeAccount(String accountId) {
-        accountHttpClient.closeAccount(accountId);
+        accountManagementHttpClient.closeAccount(accountId);
     }
 }

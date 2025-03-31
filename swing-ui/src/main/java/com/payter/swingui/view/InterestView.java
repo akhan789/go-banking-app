@@ -9,7 +9,6 @@ import java.awt.Insets;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import com.payter.swingui.viewmodel.InterestManagementViewModel;
@@ -21,7 +20,7 @@ import com.payter.swingui.viewmodel.InterestManagementViewModel;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class InterestView extends JPanel {
+public class InterestView extends AbstractView {
 
     private static final long serialVersionUID = -455612526050486428L;
 

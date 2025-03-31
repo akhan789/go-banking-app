@@ -10,10 +10,18 @@ import com.payter.swingui.model.Account;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class AccountHttpClient extends AbstractHttpClient {
+public class AccountManagementHttpClient extends AbstractHttpClient {
 
-    public AccountHttpClient() {
+    public AccountManagementHttpClient() {
         super();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getBaseUrl() {
+        return "http://localhost:8000";
     }
 
     // Create an account (POST request)
