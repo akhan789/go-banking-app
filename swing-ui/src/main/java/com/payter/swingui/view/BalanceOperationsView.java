@@ -142,8 +142,7 @@ public class BalanceOperationsView extends AbstractView {
 
         transferBtn.addActionListener(ae -> {
             try {
-                balanceOpsVM.transfer(accountIdField.getText(), toAccountIdField.getText(),
-                        amountField.getText());
+                balanceOpsVM.transfer(accountIdField.getText(), toAccountIdField.getText(), amountField.getText());
             }
             catch(BalanceOperationsViewModelException e) {
                 showError(e.getMessage());

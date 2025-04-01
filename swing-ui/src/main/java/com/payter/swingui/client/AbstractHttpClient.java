@@ -7,7 +7,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * 
@@ -19,26 +21,38 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public abstract class AbstractHttpClient {
 
     protected HttpClient client;
-    protected ObjectMapper objectMapper;
+    private static final ObjectMapper OBJECT_MAPPER;
+
+    static {
+        OBJECT_MAPPER = new ObjectMapper();
+        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    }
 
     public AbstractHttpClient() {
         this.client = HttpClient.newHttpClient();
-        this.objectMapper = new ObjectMapper();
     }
 
     protected abstract String getBaseUrl();
 
-    protected <T> T sendPostRequest(String endpoint, Object requestBody, Class<T> responseType) throws Exception {
-        String jsonRequestBody = objectMapper.writeValueAsString(requestBody);
+    protected <T> T sendPostRequest(String endpoint, Object requestBodyDetails, Class<T> responseType)
+            throws Exception {
+        String requestBody;
+        if(requestBodyDetails instanceof String) {
+            requestBody = (String) requestBodyDetails;
+        }
+        else {
+            requestBody = OBJECT_MAPPER.writeValueAsString(requestBodyDetails);
+        }
 
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(getBaseUrl() + endpoint))
-                .header("Content-Type", "application/json").POST(BodyPublishers.ofString(jsonRequestBody)).build();
+                .header("Content-Type", "application/json").POST(BodyPublishers.ofString(requestBody)).build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if(response.statusCode() == 200 || response.statusCode() == 201) {
             if(responseType != Void.class) {
-                return objectMapper.readValue(response.body(), responseType);
+                return OBJECT_MAPPER.readValue(response.body(), responseType);
             }
             return null;
         }
@@ -53,13 +67,22 @@ public abstract class AbstractHttpClient {
         }
     }
 
+    @SuppressWarnings("unchecked")
     protected <T> T sendGetRequest(String endpoint, Class<T> responseType) throws Exception {
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(getBaseUrl() + endpoint)).GET().build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if(response.statusCode() == 200) {
-            return objectMapper.readValue(response.body(), responseType);
+            if(responseType != Void.class && response.body() != null && !response.body().isEmpty()) {
+                try {
+                    return OBJECT_MAPPER.readValue(response.body(), responseType);
+                }
+                catch(Exception e) {
+                    return (T) response.body();
+                }
+            }
+            return null;
         }
         else {
             throw new RuntimeException("Failed to send GET request. HTTP status: " + response.statusCode());

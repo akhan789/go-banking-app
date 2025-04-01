@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -33,6 +34,7 @@ public class BalanceOperationsSimulator {
     static {
         OBJECT_MAPPER = new ObjectMapper();
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        OBJECT_MAPPER.registerModule(new JavaTimeModule());
     }
 
     public static void main(String[] args) throws Exception {
@@ -52,13 +54,13 @@ public class BalanceOperationsSimulator {
                 getBalance(exchange);
             }
             else if(path.matches("/balance/\\w+/credit") && method.equals("POST")) {
-                processCredit(exchange);
+                credit(exchange);
             }
             else if(path.matches("/balance/\\w+/debit") && method.equals("POST")) {
-                processDebit(exchange);
+                debit(exchange);
             }
             else if(path.matches("/balance/\\w+/transfer/\\w+") && method.equals("POST")) {
-                processTransfer(exchange);
+                transfer(exchange);
             }
             else {
                 exchange.sendResponseHeaders(404, -1);
@@ -71,7 +73,7 @@ public class BalanceOperationsSimulator {
             sendResponse(exchange, 200, response);
         }
 
-        private void processCredit(HttpExchange exchange) throws IOException {
+        private void credit(HttpExchange exchange) throws IOException {
             String accountId = extractAccountId(exchange);
 
             String requestBody;
@@ -83,7 +85,7 @@ public class BalanceOperationsSimulator {
             sendResponse(exchange, 200, response);
         }
 
-        private void processDebit(HttpExchange exchange) throws IOException {
+        private void debit(HttpExchange exchange) throws IOException {
             String accountId = extractAccountId(exchange);
 
             String requestBody;
@@ -95,17 +97,17 @@ public class BalanceOperationsSimulator {
             sendResponse(exchange, 200, response);
         }
 
-        private void processTransfer(HttpExchange exchange) throws IOException {
+        private void transfer(HttpExchange exchange) throws IOException {
             String accountId = extractAccountId(exchange);
             String toAccountId = extractToAccountId(exchange);
 
-            String requestBody;
+            String amount;
             try(InputStream inputStream = exchange.getRequestBody()) {
-                requestBody = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                amount = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             }
 
             String response = sendHttpRequest(ACCOUNT_DATABASE_URL + "/" + accountId + "/transfer/" + toAccountId,
-                    "POST", requestBody);
+                    "POST", amount);
             sendResponse(exchange, 200, response);
         }
 

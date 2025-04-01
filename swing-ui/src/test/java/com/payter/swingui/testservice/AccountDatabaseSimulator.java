@@ -13,8 +13,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -26,10 +28,16 @@ import com.sun.net.httpserver.HttpServer;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class AccountDatabaseServer {
+public class AccountDatabaseSimulator {
 
     private static final ConcurrentHashMap<String, Account> ACCOUNT_DATABASE = new ConcurrentHashMap<>();
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER;
+
+    static {
+        OBJECT_MAPPER = new ObjectMapper();
+        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    }
 
     public static void main(String[] args) throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress(8081), 0);
@@ -46,7 +54,11 @@ public class AccountDatabaseServer {
             String method = exchange.getRequestMethod();
 
             try {
-                if(path.equals("/accounts") && method.equals("POST")) {
+                if(path.equals("/accounts") && method.equals("GET")) {
+                    sendResponse(exchange, 200,
+                            OBJECT_MAPPER.writeValueAsString(new ArrayList<>(ACCOUNT_DATABASE.values())));
+                }
+                else if(path.equals("/accounts") && method.equals("POST")) {
                     createAccount(exchange);
                 }
                 else if(path.matches("/accounts/\\w+/suspend") && method.equals("POST")) {

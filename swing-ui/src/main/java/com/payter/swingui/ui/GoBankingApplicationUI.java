@@ -13,7 +13,7 @@ import javax.swing.JTabbedPane;
 import com.payter.swingui.view.AccountManagementView;
 import com.payter.swingui.view.AuditLogView;
 import com.payter.swingui.view.BalanceOperationsView;
-import com.payter.swingui.view.InterestView;
+import com.payter.swingui.view.InterestManagementView;
 import com.payter.swingui.viewmodel.AccountManagementViewModel;
 import com.payter.swingui.viewmodel.AuditLoggingViewModel;
 import com.payter.swingui.viewmodel.BalanceOperationsViewModel;
@@ -71,7 +71,7 @@ public class GoBankingApplicationUI extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Account Management", new AccountManagementView(accountVM));
         tabbedPane.addTab("Balance Operations", new BalanceOperationsView(balanceOpsVM));
-        tabbedPane.addTab("Interest Management", new InterestView(interestVM));
+        tabbedPane.addTab("Interest Management", new InterestManagementView(interestVM));
         tabbedPane.addTab("Audit Logging", new AuditLogView(auditLogVM));
         add(tabbedPane, BorderLayout.CENTER);
     }
