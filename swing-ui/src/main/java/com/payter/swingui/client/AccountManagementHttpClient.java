@@ -27,7 +27,7 @@ public class AccountManagementHttpClient extends AbstractHttpClient {
     // Create an account (POST request)
     public Account createAccount(Account account) {
         try {
-            return sendPostRequest("/accounts", account, Account.class);
+            return sendPostRequest("/accounts", convertToJSONString(account), Account.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());

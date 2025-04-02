@@ -6,6 +6,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,6 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.payter.swingui.model.AuditLoggingEntry;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -31,6 +37,8 @@ import com.sun.net.httpserver.HttpServer;
 public class AccountDatabaseSimulator {
 
     private static final ConcurrentHashMap<String, Account> ACCOUNT_DATABASE = new ConcurrentHashMap<>();
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+    private static final String AUDIT_LOG_URL = "http://localhost:8003/audit/log";
     private static final ObjectMapper OBJECT_MAPPER;
 
     static {
@@ -116,7 +124,9 @@ public class AccountDatabaseSimulator {
 
             Account newAccount = new Account(accountId, accountName, currency, balance);
             ACCOUNT_DATABASE.put(accountId, newAccount);
-            sendResponse(exchange, 201, OBJECT_MAPPER.writeValueAsString(newAccount));
+            String newAccountJson = OBJECT_MAPPER.writeValueAsString(newAccount);
+            sendResponse(exchange, 201, newAccountJson);
+            logAuditEvent("CREATE", "Created account: " + newAccountJson);
         }
 
         private void updateAccountStatus(HttpExchange exchange, String newStatus) throws IOException {
@@ -130,6 +140,7 @@ public class AccountDatabaseSimulator {
 
             account.setStatus(newStatus);
             sendResponse(exchange, 200, "Account status updated to " + newStatus);
+            logAuditEvent("UPDATE", "Account id: " + accountId + " status has been updated to " + newStatus);
         }
 
         private void getBalance(HttpExchange exchange) throws IOException {
@@ -185,6 +196,7 @@ public class AccountDatabaseSimulator {
 
             account.credit(amount);
             sendResponse(exchange, 200, "true");
+            logAuditEvent("CREDIT", "Credit funds to account id: " + accountId + ", amount: " + amount);
         }
 
         private void debit(HttpExchange exchange) throws IOException {
@@ -221,6 +233,7 @@ public class AccountDatabaseSimulator {
 
             account.debit(amount);
             sendResponse(exchange, 200, "true");
+            logAuditEvent("DEBIT", "Debited funds from account id: " + accountId + ", amount: " + amount);
         }
 
         private void transfer(HttpExchange exchange) throws IOException {
@@ -270,6 +283,8 @@ public class AccountDatabaseSimulator {
             }
 
             sendResponse(exchange, 200, "true");
+            logAuditEvent("TRANSFER", "Transferred funds from account id: " + fromAccount.getAccountId()
+                    + " to account id: " + toAccountId + ", amount: " + amount);
         }
 
         private String extractAccountId(HttpExchange exchange) {
@@ -284,6 +299,38 @@ public class AccountDatabaseSimulator {
             exchange.sendResponseHeaders(statusCode, response.getBytes().length);
             try(OutputStream os = exchange.getResponseBody()) {
                 os.write(response.getBytes());
+            }
+        }
+
+        private void logAuditEvent(String eventType, String details) {
+            try {
+                String requestBody = OBJECT_MAPPER
+                        .writeValueAsString(new AuditLoggingEntry(eventType, details, LocalDateTime.now()));
+                sendHttpRequest(AUDIT_LOG_URL, "POST", requestBody);
+            }
+            catch(Exception e) {
+                System.err.println("Failed to log audit event: " + e.getMessage());
+            }
+        }
+
+        private String sendHttpRequest(String url, String method, String body) throws IOException {
+            try {
+                HttpRequest.Builder requestBuilder = HttpRequest.newBuilder().uri(URI.create(url))
+                        .header("Content-Type", "application/json");
+
+                if(method.equals("POST")) {
+                    requestBuilder.POST(HttpRequest.BodyPublishers.ofString(body != null ? body : ""));
+                }
+                else {
+                    requestBuilder.GET();
+                }
+
+                HttpRequest request = requestBuilder.build();
+                HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+                return response.body();
+            }
+            catch(Exception e) {
+                throw new IOException("Failed to send HTTP request", e);
             }
         }
     }

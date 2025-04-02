@@ -63,15 +63,14 @@ public class AccountManagementSimulator {
         }
 
         private void createAccount(HttpExchange exchange) throws IOException {
-            String requestBody;
+            String account;
             try(InputStreamReader reader = new InputStreamReader(exchange.getRequestBody());
                     BufferedReader bufferedReader = new BufferedReader(reader)) {
-                requestBody = bufferedReader.lines().collect(Collectors.joining());
+                account = bufferedReader.lines().collect(Collectors.joining());
             }
-            String response = sendHttpRequest(ACCOUNT_DATABASE_URL, "POST", requestBody);
+            String response = sendHttpRequest(ACCOUNT_DATABASE_URL, "POST", account);
             sendResponse(exchange, 201, response);
         }
-
 
         private void updateStatus(HttpExchange exchange, String action) throws IOException {
             String accountId = extractAccountId(exchange);

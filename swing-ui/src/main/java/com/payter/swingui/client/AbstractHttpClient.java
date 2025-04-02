@@ -4,9 +4,10 @@ package com.payter.swingui.client;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  */
 public abstract class AbstractHttpClient {
 
-    protected HttpClient client;
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final ObjectMapper OBJECT_MAPPER;
 
     static {
@@ -29,63 +30,78 @@ public abstract class AbstractHttpClient {
         OBJECT_MAPPER.registerModule(new JavaTimeModule());
     }
 
-    public AbstractHttpClient() {
-        this.client = HttpClient.newHttpClient();
-    }
-
     protected abstract String getBaseUrl();
 
-    protected <T> T sendPostRequest(String endpoint, Object requestBodyDetails, Class<T> responseType)
-            throws Exception {
-        String requestBody;
-        if(requestBodyDetails instanceof String) {
-            requestBody = (String) requestBodyDetails;
-        }
-        else {
-            requestBody = OBJECT_MAPPER.writeValueAsString(requestBodyDetails);
-        }
+    @SuppressWarnings("unchecked")
+    public <T> T sendGetRequest(String endpoint, Class<T> responseType) throws Exception {
+        //@formatter:off
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(getBaseUrl() + endpoint))
+            .GET()
+            .header("Content-Type", "application/json")
+            .build();
+        //@formatter:on
 
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(getBaseUrl() + endpoint))
-                .header("Content-Type", "application/json").POST(BodyPublishers.ofString(requestBody)).build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if(response.statusCode() == 200 || response.statusCode() == 201) {
-            if(responseType != Void.class) {
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        if(response.statusCode() >= 200 && response.statusCode() < 300) {
+            try {
                 return OBJECT_MAPPER.readValue(response.body(), responseType);
             }
-            return null;
+            catch(Exception e) {
+                return (T) response.body();
+            }
         }
         else {
-            if(response.body() == null) {
-                throw new RuntimeException("Failed to send POST request. HTTP status: " + response.statusCode());
-            }
-            else {
-                throw new RuntimeException(
-                        "Failed to send POST request. HTTP status: " + response.statusCode() + " - " + response.body());
-            }
+            throw new RuntimeException(
+                    "GET request failed with status: " + response.statusCode() + " - " + response.body());
         }
     }
 
     @SuppressWarnings("unchecked")
-    protected <T> T sendGetRequest(String endpoint, Class<T> responseType) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(getBaseUrl() + endpoint)).GET().build();
+    public <T> T sendGetRequest(String endpoint, TypeReference<T> typeReference) throws Exception {
+        //@formatter:off
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(getBaseUrl() + endpoint))
+            .GET()
+            .header("Content-Type", "application/json")
+            .build();
+        //@formatter:on
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if(response.statusCode() == 200) {
-            if(responseType != Void.class && response.body() != null && !response.body().isEmpty()) {
-                try {
-                    return OBJECT_MAPPER.readValue(response.body(), responseType);
-                }
-                catch(Exception e) {
-                    return (T) response.body();
-                }
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        if(response.statusCode() >= 200 && response.statusCode() < 300) {
+            try {
+                return OBJECT_MAPPER.readValue(response.body(), typeReference);
             }
-            return null;
+            catch(Exception e) {
+                return (T) response.body();
+            }
         }
         else {
-            throw new RuntimeException("Failed to send GET request. HTTP status: " + response.statusCode());
+            throw new RuntimeException(
+                    "GET request failed with status: " + response.statusCode() + " - " + response.body());
         }
+    }
+
+    public <T> T sendPostRequest(String endpoint, String requestBody, Class<T> responseType) throws Exception {
+        //@formatter:off
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(getBaseUrl() + endpoint))
+            .POST(requestBody != null ? HttpRequest.BodyPublishers.ofString(requestBody) : HttpRequest.BodyPublishers.noBody())
+            .header("Content-Type", "application/json")
+            .build();
+        //@formatter:on
+
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        if(response.statusCode() >= 200 && response.statusCode() < 300) {
+            return responseType == Void.class ? null : OBJECT_MAPPER.readValue(response.body(), responseType);
+        }
+        else {
+            throw new RuntimeException(
+                    "POST request failed with status: " + response.statusCode() + " - " + response.body());
+        }
+    }
+
+    protected <T> String convertToJSONString(T object) throws JsonProcessingException {
+        return OBJECT_MAPPER.writeValueAsString(object);
     }
 }

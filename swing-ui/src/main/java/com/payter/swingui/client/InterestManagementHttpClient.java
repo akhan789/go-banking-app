@@ -21,7 +21,7 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public void setInterestRate(double rate) {
         try {
-            sendPostRequest("/interest/rate", rate, Void.class);
+            sendPostRequest("/interest/rate", String.valueOf(rate), Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -59,7 +59,7 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public void applyInterest(boolean force) {
         try {
-            sendPostRequest("/interest/apply", force, Void.class);
+            sendPostRequest("/interest/apply", String.valueOf(force), Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -68,7 +68,7 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public void skipTime(int periodsToSkip) {
         try {
-            sendPostRequest("/interest/skip-time", periodsToSkip, Void.class);
+            sendPostRequest("/interest/skip-time", String.valueOf(periodsToSkip), Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());

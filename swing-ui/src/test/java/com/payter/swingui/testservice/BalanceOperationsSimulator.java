@@ -11,9 +11,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -29,13 +26,6 @@ public class BalanceOperationsSimulator {
 
     private static final String ACCOUNT_DATABASE_URL = "http://localhost:8081/accounts";
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
-    private static final ObjectMapper OBJECT_MAPPER;
-
-    static {
-        OBJECT_MAPPER = new ObjectMapper();
-        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        OBJECT_MAPPER.registerModule(new JavaTimeModule());
-    }
 
     public static void main(String[] args) throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 8001), 0);
@@ -76,24 +66,24 @@ public class BalanceOperationsSimulator {
         private void credit(HttpExchange exchange) throws IOException {
             String accountId = extractAccountId(exchange);
 
-            String requestBody;
+            String amount;
             try(InputStream inputStream = exchange.getRequestBody()) {
-                requestBody = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                amount = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             }
 
-            String response = sendHttpRequest(ACCOUNT_DATABASE_URL + "/" + accountId + "/credit", "POST", requestBody);
+            String response = sendHttpRequest(ACCOUNT_DATABASE_URL + "/" + accountId + "/credit", "POST", amount);
             sendResponse(exchange, 200, response);
         }
 
         private void debit(HttpExchange exchange) throws IOException {
             String accountId = extractAccountId(exchange);
 
-            String requestBody;
+            String amount;
             try(InputStream inputStream = exchange.getRequestBody()) {
-                requestBody = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                amount = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             }
 
-            String response = sendHttpRequest(ACCOUNT_DATABASE_URL + "/" + accountId + "/debit", "POST", requestBody);
+            String response = sendHttpRequest(ACCOUNT_DATABASE_URL + "/" + accountId + "/debit", "POST", amount);
             sendResponse(exchange, 200, response);
         }
 

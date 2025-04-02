@@ -2,6 +2,8 @@
 package com.payter.swingui.ui;
 
 import java.awt.BorderLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -11,7 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
 import com.payter.swingui.view.AccountManagementView;
-import com.payter.swingui.view.AuditLogView;
+import com.payter.swingui.view.AuditLoggingView;
 import com.payter.swingui.view.BalanceOperationsView;
 import com.payter.swingui.view.InterestManagementView;
 import com.payter.swingui.viewmodel.AccountManagementViewModel;
@@ -29,11 +31,6 @@ import com.payter.swingui.viewmodel.InterestManagementViewModel;
 public class GoBankingApplicationUI extends JFrame {
 
     private static final long serialVersionUID = -163076521878436580L;
-
-    private AccountManagementViewModel accountVM = new AccountManagementViewModel();
-    private BalanceOperationsViewModel balanceOpsVM = new BalanceOperationsViewModel();
-    private InterestManagementViewModel interestVM = new InterestManagementViewModel();
-    private AuditLoggingViewModel auditLogVM = new AuditLoggingViewModel();
 
     public GoBankingApplicationUI() {
         setTitle("Go Banking App");
@@ -69,11 +66,19 @@ public class GoBankingApplicationUI extends JFrame {
     // Create UI with tabs for each functionality
     private void createUI() {
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Account Management", new AccountManagementView(accountVM));
-        tabbedPane.addTab("Balance Operations", new BalanceOperationsView(balanceOpsVM));
-        tabbedPane.addTab("Interest Management", new InterestManagementView(interestVM));
-        tabbedPane.addTab("Audit Logging", new AuditLogView(auditLogVM));
+        tabbedPane.addTab("Account Management", new AccountManagementView(new AccountManagementViewModel()));
+        tabbedPane.addTab("Balance Operations", new BalanceOperationsView(new BalanceOperationsViewModel()));
+        tabbedPane.addTab("Interest Management", new InterestManagementView(new InterestManagementViewModel()));
+        AuditLoggingView auditLoggingView = new AuditLoggingView(new AuditLoggingViewModel());
+        tabbedPane.addTab("Audit Logging", auditLoggingView);
         add(tabbedPane, BorderLayout.CENTER);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent we) {
+                auditLoggingView.cleanup();
+            }
+        });
     }
 
     // Method to show the About dialog

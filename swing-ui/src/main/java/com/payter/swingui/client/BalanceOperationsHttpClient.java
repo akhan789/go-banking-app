@@ -24,7 +24,7 @@ public class BalanceOperationsHttpClient extends AbstractHttpClient {
     // Credit an account (POST request for credit)
     public void credit(String accountId, double amount) {
         try {
-            sendPostRequest("/balance/" + accountId + "/credit", amount, Void.class);
+            sendPostRequest("/balance/" + accountId + "/credit", String.valueOf(amount), Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -34,7 +34,7 @@ public class BalanceOperationsHttpClient extends AbstractHttpClient {
     // Debit an account (POST request for debit)
     public boolean debit(String accountId, double amount) {
         try {
-            return sendPostRequest("/balance/" + accountId + "/debit", amount, Boolean.class);
+            return sendPostRequest("/balance/" + accountId + "/debit", String.valueOf(amount), Boolean.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -47,7 +47,7 @@ public class BalanceOperationsHttpClient extends AbstractHttpClient {
         try {
             // Directly passing parameters for the transfer request
             String transferUrl = String.format("/balance/%s/transfer/%s", fromAccountId, toAccountId);
-            return sendPostRequest(transferUrl, amount, Boolean.class);
+            return sendPostRequest(transferUrl, String.valueOf(amount), Boolean.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());

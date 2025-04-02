@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.payter.swingui.model.AuditLoggingEntry;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -35,6 +36,7 @@ import com.sun.net.httpserver.HttpServer;
 public class InterestManagementSimulator {
 
     private static final String ACCOUNT_DATABASE_URL = "http://localhost:8081/accounts";
+    private static final String AUDIT_LOG_URL = "http://localhost:8003/audit/log";
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final ObjectMapper OBJECT_MAPPER;
     private static double globalDailyRate = 4.5;
@@ -115,6 +117,7 @@ public class InterestManagementSimulator {
             }
 
             globalDailyRate = dailyRate;
+            logAuditEvent("INTEREST_RATE_CHANGE", "Global daily rate set to " + dailyRate);
             sendResponse(exchange, 200, rate);
         }
 
@@ -136,6 +139,8 @@ public class InterestManagementSimulator {
             interestConfig = new InterestConfig(calculationFrequency, LocalDateTime.now(),
                     calculateNextApplicationTime(calculationFrequency));
             sendResponse(exchange, 200, OBJECT_MAPPER.writeValueAsString(interestConfig));
+            logAuditEvent("INTEREST_CALCULATION_FREQUENCY",
+                    "Interest calculation frequency updated: " + calculationFrequency);
         }
 
         private void getCalculationFrequency(HttpExchange exchange) throws IOException {
@@ -189,7 +194,6 @@ public class InterestManagementSimulator {
                 os.write(response.getBytes());
             }
         }
-
     }
 
     private static void applyScheduledInterest() {
@@ -218,7 +222,7 @@ public class InterestManagementSimulator {
         // Calculate the interest based on a global daily rate
         // and credit to each qualifying account. So if no days
         // have passed there is no interest applied to the accounts
-        // unless force apply was chosen in which case immediately apply
+        // unless force apply was passed in which case immediately apply
         // a flat rate based on globalDailyRate.
         int days = (int) ChronoUnit.DAYS.between(interestConfig.getLastAppliedAt(), LocalDateTime.now());
         for(Account account : accounts) {
@@ -227,6 +231,7 @@ public class InterestManagementSimulator {
                         : calculateInterest(account.getBalance(), globalDailyRate, days);
                 sendHttpRequest(ACCOUNT_DATABASE_URL + "/" + account.getAccountId() + "/credit", "POST",
                         String.valueOf(interest));
+                logAuditEvent("TRANSACTION", "Credited " + interest + " to Account " + account.getAccountId());
             }
         }
     }
@@ -250,6 +255,17 @@ public class InterestManagementSimulator {
                 return now.plusMonths(1);
             default:
                 return now.plusMonths(1);
+        }
+    }
+
+    private static void logAuditEvent(String eventType, String details) {
+        try {
+            String requestBody = OBJECT_MAPPER
+                    .writeValueAsString(new AuditLoggingEntry(eventType, details, LocalDateTime.now()));
+            sendHttpRequest(AUDIT_LOG_URL, "POST", requestBody);
+        }
+        catch(Exception e) {
+            System.err.println("Failed to log audit event: " + e.getMessage());
         }
     }
 
