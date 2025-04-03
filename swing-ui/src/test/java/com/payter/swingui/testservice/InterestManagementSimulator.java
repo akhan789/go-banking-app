@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.payter.swingui.model.AuditLoggingEntry;
 import com.sun.net.httpserver.HttpExchange;
@@ -46,6 +47,7 @@ public class InterestManagementSimulator {
     static {
         OBJECT_MAPPER = new ObjectMapper();
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         OBJECT_MAPPER.registerModule(new JavaTimeModule());
     }
 

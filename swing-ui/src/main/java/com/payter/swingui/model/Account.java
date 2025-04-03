@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Account model.
+ * 
  * 
  * @author Abid Khan
  * @since 0.0.1_SNAPSHOT
