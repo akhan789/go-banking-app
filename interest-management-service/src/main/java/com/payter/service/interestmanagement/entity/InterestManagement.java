@@ -2,6 +2,7 @@
 package com.payter.service.interestmanagement.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 
@@ -12,9 +13,10 @@ import java.math.BigDecimal;
  */
 public class InterestManagement {
 
-    private Long id;
+    private long id;
     private BigDecimal dailyRate;
     private CalculationFrequency calculationFrequency;
+    private LocalDateTime createdAt;
 
     public enum CalculationFrequency {
         DAILY, WEEKLY, MONTHLY
@@ -23,11 +25,11 @@ public class InterestManagement {
     public InterestManagement() {
     }
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -45,5 +47,13 @@ public class InterestManagement {
 
     public void setCalculationFrequency(CalculationFrequency frequency) {
         this.calculationFrequency = frequency;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

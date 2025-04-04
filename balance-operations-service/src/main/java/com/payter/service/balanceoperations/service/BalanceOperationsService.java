@@ -19,4 +19,6 @@ public interface BalanceOperationsService {
     BalanceOperation processCredit(BalanceOperation balanceOperation) throws Exception;
 
     BalanceOperation processDebit(BalanceOperation balanceOperation) throws Exception;
+
+    BalanceOperation processTransfer(String fromAccountId, String toAccountId, BigDecimal amount) throws Exception;
 }

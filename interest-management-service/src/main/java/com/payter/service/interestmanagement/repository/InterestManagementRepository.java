@@ -12,5 +12,7 @@ import com.payter.service.interestmanagement.entity.InterestManagement;
  */
 public interface InterestManagementRepository {
 
+    InterestManagement save(InterestManagement interestManagement) throws Exception;
+
     InterestManagement findLatest() throws Exception;
 }

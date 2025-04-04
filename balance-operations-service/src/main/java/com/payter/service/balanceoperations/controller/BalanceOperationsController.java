@@ -49,7 +49,7 @@ public class BalanceOperationsController {
                     handleGet(exchange, path, pathSegments);
                     break;
                 case "POST":
-                    handlePost(exchange, path);
+                    handlePost(exchange, path, pathSegments);
                     break;
                 default:
                     HttpClientService.sendResponse(exchange, 405, "{\"error\": \"Method Not Allowed\"}");
@@ -62,7 +62,7 @@ public class BalanceOperationsController {
     }
 
     private void handleGet(HttpExchange exchange, String path, String[] pathSegments) throws Exception {
-        if(path.startsWith("/transactions/balance/")) {
+        if(path.startsWith("/balanceoperations/balance/")) {
             if(pathSegments.length < 4 || pathSegments[3].isEmpty()) {
                 HttpClientService.sendResponse(exchange, 400, "{\"error\": \"Invalid account ID\"}");
                 return;
@@ -73,7 +73,7 @@ public class BalanceOperationsController {
         }
     }
 
-    private void handlePost(HttpExchange exchange, String path) throws Exception {
+    private void handlePost(HttpExchange exchange, String path, String[] pathSegments) throws Exception {
         try(InputStream is = exchange.getRequestBody()) {
             String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             BalanceOperation balanceOperation = parser.deserialise(body, BalanceOperation.class);
@@ -88,6 +88,11 @@ public class BalanceOperationsController {
             else if(path.endsWith("/debit")) {
                 BalanceOperation created = service.processDebit(balanceOperation);
                 HttpClientService.sendResponse(exchange, 201, parser.serialise(created));
+            }
+            else if(path.endsWith("/transfer")) {
+                BalanceOperation transfer = service.processTransfer(balanceOperation.getAccountId(),
+                        balanceOperation.getToAccountId(), balanceOperation.getAmount());
+                HttpClientService.sendResponse(exchange, 201, parser.serialise(transfer));
             }
             else {
                 HttpClientService.sendResponse(exchange, 400, "{\"error\": \"Invalid transaction type\"}");

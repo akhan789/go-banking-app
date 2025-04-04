@@ -82,6 +82,12 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
             else {
                 stmt.setNull(4, Types.TIMESTAMP);
             }
+            if(balanceOperation.getRelatedBalanceOperationId() != -1L) {
+                stmt.setLong(5, balanceOperation.getRelatedBalanceOperationId());
+            }
+            else {
+                stmt.setNull(5, Types.INTEGER);
+            }
             stmt.executeUpdate();
             try(ResultSet rs = stmt.getGeneratedKeys()) {
                 if(rs.next()) {
@@ -94,7 +100,7 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
 
     @Override
     public List<BalanceOperation> findByAccountId(String accountId) throws SQLException {
-        String findByAccountId = "SELECT * FROM balance_operations WHERE account_id = ?";  // Ensure table name is correct
+        String findByAccountId = "SELECT * FROM balance_operations WHERE account_id = ?";
         List<BalanceOperation> balanceOperations = new ArrayList<>();
         try(PreparedStatement stmt = conn.prepareStatement(findByAccountId)) {
             stmt.setString(1, accountId);
@@ -110,8 +116,11 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
                         balanceOperation.setTimestamp(timestamp.toLocalDateTime());
                     }
                     else {
-                        balanceOperation.setTimestamp(null);  // Or handle as needed
+                        balanceOperation.setTimestamp(null);
                     }
+                    balanceOperation.setRelatedBalanceOperationId(rs.getObject("related_balance_operation_id") != null
+                            ? rs.getLong("related_balance_operation_id")
+                            : null);
                     balanceOperations.add(balanceOperation);
                 }
             }
@@ -130,20 +139,50 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
                     BigDecimal amount = rs.getBigDecimal("amount");
                     if(amount != null) {
                         Type type = Type.valueOf(rs.getString("type"));
-                        if(type == Type.CREDIT) {
+                        if(type == Type.CREDIT
+                                || type == Type.TRANSFER && rs.getObject("related_balance_operation_id") != null) {
                             balance = balance.add(amount);
                         }
-                        else if(type == Type.DEBIT) {
+                        else if(type == Type.DEBIT
+                                || type == Type.TRANSFER && rs.getObject("related_balance_operation_id") == null) {
                             balance = balance.subtract(amount);
-                        }
-                        // TODO: support TRANSFER?
-                        else {
-                            System.err.println("Unexpected type: " + type);
                         }
                     }
                 }
                 return balance;
             }
+        }
+    }
+
+    @Override
+    public void saveTransfer(BalanceOperation debitBalanceOperation, BalanceOperation creditBalanceOperation)
+            throws Exception {
+        try {
+            conn.setAutoCommit(false);
+
+            // Save debit transaction
+            BalanceOperation savedDebitBalanceOperation = save(debitBalanceOperation);
+            creditBalanceOperation.setRelatedBalanceOperationId(savedDebitBalanceOperation.getId());
+
+            // Save credit transaction
+            BalanceOperation savedCredit = save(creditBalanceOperation);
+            savedDebitBalanceOperation.setRelatedBalanceOperationId(savedCredit.getId());
+
+            // Update debit with related ID
+            try(PreparedStatement stmt = conn
+                    .prepareStatement("UPDATE balance_operations SET related_balance_operation_id = ? WHERE id = ?")) {
+                stmt.setLong(1, savedCredit.getId());
+                stmt.setLong(2, savedDebitBalanceOperation.getId());
+                stmt.executeUpdate();
+            }
+            conn.commit();
+        }
+        catch(SQLException e) {
+            conn.rollback();
+            throw e;
+        }
+        finally {
+            conn.setAutoCommit(true);
         }
     }
 }

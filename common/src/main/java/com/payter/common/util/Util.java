@@ -33,7 +33,7 @@ public final class Util {
         int retries = 3;
         while(retries > 0) {
             try {
-                httpClientService.postAsync("http://localhost:8003/audit", message);
+                httpClientService.postAsync("http://localhost:8004/auditlogging", message);
                 return;
             }
             catch(Exception e) {

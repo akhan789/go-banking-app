@@ -20,4 +20,6 @@ public interface BalanceOperationsRepository {
     List<BalanceOperation> findByAccountId(String accountId) throws Exception;
 
     BigDecimal calculateBalance(String accountId) throws Exception;
+
+    void saveTransfer(BalanceOperation debitBalanceOperation, BalanceOperation creditBalanceOperation) throws Exception;
 }

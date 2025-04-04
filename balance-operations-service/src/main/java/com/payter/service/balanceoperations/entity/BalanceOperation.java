@@ -15,9 +15,11 @@ public class BalanceOperation {
 
     private long id;
     private String accountId;
+    private String toAccountId;
     private BigDecimal amount;
     private Type type;
     private LocalDateTime timestamp;
+    private long relatedBalanceOperationId;
 
     public enum Type {
         CREDIT, DEBIT, TRANSFER;
@@ -43,6 +45,14 @@ public class BalanceOperation {
         this.accountId = accountId;
     }
 
+    public String getToAccountId() {
+        return toAccountId;
+    }
+
+    public void setToAccountId(String toAccountId) {
+        this.toAccountId = toAccountId;
+    }
+
     public BigDecimal getAmount() {
         return amount;
     }
@@ -65,5 +75,13 @@ public class BalanceOperation {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public long getRelatedBalanceOperationId() {
+        return relatedBalanceOperationId;
+    }
+
+    public void setRelatedBalanceOperationId(long relatedBalanceOperationId) {
+        this.relatedBalanceOperationId = relatedBalanceOperationId;
     }
 }

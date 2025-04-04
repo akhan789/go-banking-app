@@ -77,6 +77,38 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
         }
     }
 
+    @Override
+    public BalanceOperation processTransfer(String fromAccountId, String toAccountId, BigDecimal amount)
+            throws Exception {
+        Lock accountLock = getAccountLock(fromAccountId);
+        accountLock.lock();
+        try {
+            validateAccountStatus(fromAccountId);
+            validateAccountStatus(toAccountId);
+            BigDecimal fromBalance = getBalance(fromAccountId);
+            if(fromBalance.compareTo(amount) < 0) {
+                throw new IllegalStateException("Insufficient funds in source account");
+            }
+
+            BalanceOperation debitBalanceOperation = new BalanceOperation();
+            debitBalanceOperation.setAccountId(fromAccountId);
+            debitBalanceOperation.setAmount(amount);
+            debitBalanceOperation.setType(Type.TRANSFER);
+
+            BalanceOperation creditBalanceOperation = new BalanceOperation();
+            creditBalanceOperation.setAccountId(toAccountId);
+            creditBalanceOperation.setAmount(amount);
+            creditBalanceOperation.setType(Type.TRANSFER);
+
+            repository.saveTransfer(debitBalanceOperation, creditBalanceOperation);
+            Util.logAudit(httpClientService, "Transfer from " + fromAccountId + " to " + toAccountId + ": " + amount);
+            return debitBalanceOperation;
+        }
+        finally {
+            accountLock.unlock();
+        }
+    }
+
     private void validateAccountStatus(String accountId) throws Exception {
         String response = httpClientService.get("http://localhost:8001/accountmanagement/" + accountId);
         Account account = ParserFactory.getParser(ParserType.JSON).deserialise(response, Account.class);
