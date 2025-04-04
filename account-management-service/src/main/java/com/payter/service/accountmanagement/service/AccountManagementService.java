@@ -14,11 +14,11 @@ public interface AccountManagementService {
 
     Account createAccount(Account account) throws Exception;
 
-    Account suspendAccount(long accountId) throws Exception;
+    Account suspendAccount(String accountId) throws Exception;
 
-    Account reactivateAccount(long accountId) throws Exception;
+    Account reactivateAccount(String accountId) throws Exception;
 
-    void closeAccount(long accountId) throws Exception;
+    void closeAccount(String accountId) throws Exception;
 
-    Account getAccount(long accountId) throws Exception;
+    Account getAccount(String accountId) throws Exception;
 }

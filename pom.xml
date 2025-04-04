@@ -2,7 +2,6 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.payter</groupId>
     <artifactId>go-banking-app</artifactId>
     <version>${revision}</version>
@@ -20,12 +19,9 @@
 
     <properties>
         <revision>0.0.1-SNAPSHOT</revision>
-        <build.number>1</build.number>
+        <build.number>0</build.number>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>17</jdk.version>
-
-        <!-- Internal dependencies -->
-        <com.payter.common.version>${revision}</com.payter.common.version>
 
         <!-- Plugin dependencies -->
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
@@ -86,7 +82,12 @@
             <dependency>
                 <groupId>com.payter</groupId>
                 <artifactId>common</artifactId>
-                <version>${com.payter.common.version}</version>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.payter</groupId>
+                <artifactId>account-management-service</artifactId>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>

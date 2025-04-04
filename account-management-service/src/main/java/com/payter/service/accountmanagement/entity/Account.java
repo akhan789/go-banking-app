@@ -19,19 +19,27 @@ public class Account {
     private String accountId;
     private String accountName;
     private BigDecimal balance;
-    private String status; // ACTIVE, SUSPENDED, CLOSED
-    private String currency; // GBP / EUR / JPY
+    private Status status;
+    private Currency currency;
     private LocalDateTime creationTime;
     private List<String> statusHistory;
+
+    public enum Status {
+        ACTIVE, SUSPENDED, CLOSED;
+    }
+
+    public enum Currency {
+        GBP, EUR, JPY;
+    }
 
     public Account() {
     }
 
-    public Account(String accountId, String accountName, BigDecimal balance, String currency) {
+    public Account(String accountId, String accountName, BigDecimal balance, Currency currency) {
         this.accountId = accountId;
         this.balance = balance != null ? balance : BigDecimal.ZERO;
         this.currency = currency;
-        this.status = "ACTIVE";
+        this.status = Status.ACTIVE;
         this.creationTime = LocalDateTime.now();
         this.statusHistory = new ArrayList<>();
     }
@@ -68,19 +76,19 @@ public class Account {
         this.balance = balance;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
-    public String getCurrency() {
+    public Currency getCurrency() {
         return currency;
     }
 
-    public void setCurrency(String currency) {
+    public void setCurrency(Currency currency) {
         this.currency = currency;
     }
 

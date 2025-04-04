@@ -1,13 +1,14 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.service.accountmanagement.service;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.security.auth.login.AccountNotFoundException;
-
 import com.payter.common.http.HttpClientService;
+import com.payter.common.util.Util;
 import com.payter.service.accountmanagement.entity.Account;
+import com.payter.service.accountmanagement.entity.Account.Status;
 import com.payter.service.accountmanagement.repository.AccountManagementRepository;
 
 /**
@@ -19,28 +20,32 @@ import com.payter.service.accountmanagement.repository.AccountManagementReposito
  */
 public class DefaultAccountManagementService implements AccountManagementService {
 
-    private static final HttpClientService HTTP_SERVICE = new HttpClientService();
-    private final AccountManagementRepository repository;
-    private final Lock accountLock = new ReentrantLock();
+    private static final ConcurrentHashMap<String, Lock> ACCOUNT_LOCKS = new ConcurrentHashMap<>();
 
-    public DefaultAccountManagementService(AccountManagementRepository repository) {
+    private final AccountManagementRepository repository;
+    private final HttpClientService httpClientService;
+
+    public DefaultAccountManagementService(AccountManagementRepository repository,
+            HttpClientService httpClientService) {
         this.repository = repository;
+        this.httpClientService = httpClientService;
     }
 
     @Override
     public Account createAccount(Account account) throws Exception {
         Account saved = repository.save(account);
-        logAudit("Account created: " + saved.getId());
+        Util.logAudit(httpClientService, "Account created: " + saved.getId());
         return saved;
     }
 
     @Override
-    public Account suspendAccount(long id) throws Exception {
+    public Account suspendAccount(String accountId) throws Exception {
+        Lock accountLock = getAccountLock(accountId);
         accountLock.lock();
         try {
-            repository.updateStatus(id, "SUSPENDED");
-            logAudit("Account suspended: " + id);
-            return repository.findById(id);
+            repository.updateStatus(accountId, Status.SUSPENDED);
+            Util.logAudit(httpClientService, "Account suspended: " + accountId);
+            return repository.findByAccountId(accountId);
         }
         finally {
             accountLock.unlock();
@@ -48,12 +53,13 @@ public class DefaultAccountManagementService implements AccountManagementService
     }
 
     @Override
-    public Account reactivateAccount(long id) throws Exception {
+    public Account reactivateAccount(String accountId) throws Exception {
+        Lock accountLock = getAccountLock(accountId);
         accountLock.lock();
         try {
-            repository.updateStatus(id, "ACTIVE");
-            logAudit("Account reactivated: " + id);
-            return repository.findById(id);
+            repository.updateStatus(accountId, Status.ACTIVE);
+            Util.logAudit(httpClientService, "Account reactivated: " + accountId);
+            return repository.findByAccountId(accountId);
         }
         finally {
             accountLock.unlock();
@@ -61,11 +67,12 @@ public class DefaultAccountManagementService implements AccountManagementService
     }
 
     @Override
-    public void closeAccount(long id) throws Exception {
+    public void closeAccount(String accountId) throws Exception {
+        Lock accountLock = getAccountLock(accountId);
         accountLock.lock();
         try {
-            repository.updateStatus(id, "CLOSED");
-            logAudit("Account closed: " + id);
+            repository.updateStatus(accountId, Status.CLOSED);
+            Util.logAudit(httpClientService, "Account closed: " + accountId);
         }
         finally {
             accountLock.unlock();
@@ -73,20 +80,15 @@ public class DefaultAccountManagementService implements AccountManagementService
     }
 
     @Override
-    public Account getAccount(long id) throws Exception {
-        Account account = repository.findById(id);
+    public Account getAccount(String accountId) throws Exception {
+        Account account = repository.findByAccountId(accountId);
         if(account == null) {
-            throw new AccountNotFoundException("Account not found with ID: " + id);
+            throw new RuntimeException("Account not found with ID: " + accountId);
         }
         return account;
     }
 
-    private void logAudit(String message) {
-        try {
-            HTTP_SERVICE.postAsync("http://localhost:8003/audit", message);
-        }
-        catch(Exception e) {
-            System.err.println("Audit logging failed: " + e.getMessage());
-        }
+    private Lock getAccountLock(String accountId) {
+        return ACCOUNT_LOCKS.computeIfAbsent(accountId, key -> new ReentrantLock());
     }
 }

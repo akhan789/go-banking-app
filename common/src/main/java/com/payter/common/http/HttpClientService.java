@@ -1,10 +1,15 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.common.http;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+
+import com.sun.net.httpserver.HttpExchange;
 
 /**
  * 
@@ -48,5 +53,13 @@ public class HttpClientService {
             .build();
         //@formatter:on
         return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
+    }
+
+    public static void sendResponse(HttpExchange exchange, int status, String response) throws IOException {
+        exchange.getResponseHeaders().set("Content-Type", "application/json");
+        exchange.sendResponseHeaders(status, response.getBytes(StandardCharsets.UTF_8).length);
+        try(OutputStream os = exchange.getResponseBody()) {
+            os.write(response.getBytes(StandardCharsets.UTF_8));
+        }
     }
 }

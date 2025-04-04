@@ -2,6 +2,7 @@
 package com.payter.service.accountmanagement.repository;
 
 import com.payter.service.accountmanagement.entity.Account;
+import com.payter.service.accountmanagement.entity.Account.Status;
 
 /**
  * 
@@ -14,7 +15,7 @@ public interface AccountManagementRepository {
 
     Account save(Account account) throws Exception;
 
-    Account findById(long id) throws Exception;
+    Account findByAccountId(String accountId) throws Exception;
 
-    void updateStatus(long id, String status) throws Exception;
+    void updateStatus(String accountId, Status status) throws Exception;
 }

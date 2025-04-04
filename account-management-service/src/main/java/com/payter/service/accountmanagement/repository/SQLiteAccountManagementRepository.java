@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.payter.service.accountmanagement.entity.Account;
+import com.payter.service.accountmanagement.entity.Account.Currency;
+import com.payter.service.accountmanagement.entity.Account.Status;
 
 /**
  * 
@@ -32,24 +34,22 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
     public void createTable() throws SQLException {
         //@formatter:off
         String createTableQuery = 
-            "CREATE TABLE IF NOT EXISTS accounts (" +
+            "CREATE TABLE IF NOT EXISTS account_management (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "account_id TEXT, " +
+                "account_id TEXT UNIQUE, " +
                 "account_name TEXT, " +
-                "balance REAL, " +
+                "balance NUMERIC, " +
                 "status TEXT, " +
                 "currency TEXT, " +
-                "creation_time TIMESTAMP, " +
+                "creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "status_history TEXT" +
             ")";
         //@formatter:on
-        try(PreparedStatement stmt = conn.prepareStatement(createTableQuery)) {
-            stmt.execute();
+        try(Statement stmt = conn.createStatement()) {
+            stmt.execute(createTableQuery);
         }
         catch(SQLException e) {
-            throw new SQLException(
-                    "Error while initializing the SQLiteAccountManagementRepository and creating the accounts table.",
-                    e);
+            throw new SQLException("Error while creating the account_management table.", e);
         }
     }
 
@@ -57,7 +57,7 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
     public Account save(Account account) throws SQLException {
         //@formatter:off
         String saveQuery =
-            "INSERT INTO accounts (" +
+            "INSERT INTO account_management (" +
                 "account_id, " +
                 "account_name, " +
                 "balance, " +
@@ -71,9 +71,24 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
         try(PreparedStatement stmt = conn.prepareStatement(saveQuery, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, account.getAccountId());
             stmt.setString(2, account.getAccountName());
-            stmt.setBigDecimal(3, account.getBalance());
-            stmt.setString(4, account.getStatus());
-            stmt.setString(5, account.getCurrency());
+            if(account.getBalance() != null) {
+                stmt.setBigDecimal(3, account.getBalance());
+            }
+            else {
+                stmt.setNull(3, Types.NUMERIC);
+            }
+            if(account.getStatus() != null) {
+                stmt.setString(4, account.getStatus().name());
+            }
+            else {
+                stmt.setNull(4, Types.VARCHAR);
+            }
+            if(account.getCurrency() != null) {
+                stmt.setString(5, account.getCurrency().name());
+            }
+            else {
+                stmt.setNull(5, Types.VARCHAR);
+            }
             if(account.getCreationTime() != null) {
                 stmt.setTimestamp(6, Timestamp.valueOf(account.getCreationTime()));
             }
@@ -86,10 +101,21 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
             else {
                 stmt.setNull(7, Types.VARCHAR);
             }
-            stmt.executeUpdate();
+
+            int affectedRows = stmt.executeUpdate();
+            if(affectedRows == 0) {
+                throw new SQLException("Saving account failed, no rows affected.");
+            }
+
             try(ResultSet rs = stmt.getGeneratedKeys()) {
                 if(rs.next()) {
-                    account.setId(rs.getLong(1));
+                    long generatedId = rs.getLong(1);
+                    if(generatedId > 0) {
+                        account.setId(generatedId);
+                    }
+                    else {
+                        throw new SQLException("Saving account failed, no ID obtained.");
+                    }
                 }
             }
             return account;
@@ -100,41 +126,69 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
     }
 
     @Override
-    public Account findById(long id) throws SQLException {
-        String findByIdQuery = "SELECT * FROM accounts WHERE id = ?";
-        try(PreparedStatement stmt = conn.prepareStatement(findByIdQuery); ResultSet rs = stmt.executeQuery()) {
-            stmt.setLong(1, id);
-            if(rs.next()) {
-                Account account = new Account();
-                account.setId(rs.getLong("id"));
-                account.setAccountId(rs.getString("account_id"));
-                account.setAccountName(rs.getString("account_name"));
-                account.setBalance(rs.getBigDecimal("balance"));
-                account.setCurrency(rs.getString("currency"));
-                account.setStatus(rs.getString("status"));
-                Timestamp creationTime = rs.getTimestamp("creation_time");
-                if(creationTime != null) {
-                    account.setCreationTime(creationTime.toLocalDateTime());
+    public Account findByAccountId(String accountId) throws SQLException {
+        String findByIdQuery = "SELECT * FROM account_management WHERE account_id = ?";
+        try(PreparedStatement stmt = conn.prepareStatement(findByIdQuery)) {
+            stmt.setString(1, accountId);
+            try(ResultSet rs = stmt.executeQuery()) {
+                if(rs.next()) {
+                    Account account = new Account();
+                    account.setId(rs.getLong("id"));
+                    account.setAccountId(rs.getString("account_id"));
+                    account.setAccountName(rs.getString("account_name"));
+                    account.setBalance(rs.getBigDecimal("balance"));
+                    try {
+                        account.setCurrency(Currency.valueOf(rs.getString("currency")));
+                    }
+                    catch(IllegalArgumentException | NullPointerException e) {
+                        throw new SQLException("Invalid currency value in database", e);
+                    }
+
+                    try {
+                        account.setStatus(Status.valueOf(rs.getString("status")));
+                    }
+                    catch(IllegalArgumentException | NullPointerException e) {
+                        throw new SQLException("Invalid status value in database", e);
+                    }
+                    Timestamp creationTime = rs.getTimestamp("creation_time");
+                    if(creationTime != null) {
+                        account.setCreationTime(creationTime.toLocalDateTime());
+                    }
+                    String statusHistoryString = rs.getString("status_history");
+                    if(statusHistoryString != null && !statusHistoryString.trim().isEmpty()) {
+                        List<String> statusHistory = Arrays.asList(statusHistoryString.split("\\|"));
+                        account.setStatusHistory(statusHistory);
+                    }
+                    return account;
                 }
-                String statusHistoryString = rs.getString("status_history");
-                if(statusHistoryString != null && !statusHistoryString.trim().isEmpty()) {
-                    List<String> statusHistory = Arrays.asList(statusHistoryString.split("\\|"));
-                    account.setStatusHistory(statusHistory);
-                }
-                return account;
             }
-            throw new SQLException("Account not found");
         }
+        return null;
     }
 
     @Override
-    public void updateStatus(long id, String status) throws SQLException {
-        String updateStatusQuery = "UPDATE accounts SET status = ? WHERE id = ?";
+    public void updateStatus(String accountId, Status status) throws SQLException {
+        if(accountId == null || accountId.trim().isEmpty()) {
+            throw new IllegalArgumentException("accountId cannot be null or empty.");
+        }
+        if(status == null) {
+            throw new IllegalArgumentException("status cannot be null.");
+        }
+        //@formatter:off
+        String updateStatusQuery = 
+            "UPDATE account_management" +
+            "SET "+
+                "status = ?, " +
+                "status_history = COALESCE(status_history || '|', '') || ? " +
+            "WHERE " +
+                "account_id = ?";
+        //@formatter:on
         try(PreparedStatement stmt = conn.prepareStatement(updateStatusQuery)) {
-            stmt.setString(1, status);
-            stmt.setLong(2, id);
+            stmt.setString(1, status.name());
+            stmt.setString(2, status.name()); // Append to status_history
+            stmt.setString(3, accountId);
             if(stmt.executeUpdate() == 0) {
-                throw new SQLException("Account with id " + id + " not found or status was not updated.");
+                throw new SQLException("Account with accountId " + accountId + " not found or status was not updated.");
             }
         }
     }

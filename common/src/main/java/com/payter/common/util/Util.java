@@ -4,6 +4,8 @@ package com.payter.common.util;
 
 import java.io.File;
 
+import com.payter.common.http.HttpClientService;
+
 /**
  * 
  * 
@@ -24,6 +26,22 @@ public final class Util {
         if(!directory.exists()) {
             directory.mkdirs();
             System.out.println("Database directory created: " + dbDirectory);
+        }
+    }
+
+    public static void logAudit(final HttpClientService httpClientService, final String message) {
+        int retries = 3;
+        while(retries > 0) {
+            try {
+                httpClientService.postAsync("http://localhost:8003/audit", message);
+                return;
+            }
+            catch(Exception e) {
+                retries--;
+                if(retries == 0) {
+                    System.err.println("Audit logging failed after retries: " + e.getMessage());
+                }
+            }
         }
     }
 }
