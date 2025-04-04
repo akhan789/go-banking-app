@@ -36,7 +36,7 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
         String createTableQuery = 
             "CREATE TABLE IF NOT EXISTS balance_operations (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "account_id INTEGER, " +
+                "account_id TEXT UNIQUE, " +
                 "amount NUMERIC, " +
                 "type TEXT, "+
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP"+

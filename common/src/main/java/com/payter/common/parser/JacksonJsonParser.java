@@ -1,7 +1,10 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.common.parser;
 
+import java.util.List;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -32,5 +35,11 @@ class JacksonJsonParser implements Parser {
     @Override
     public <T> T deserialise(String message, Class<T> clazz) throws Exception {
         return objectMapper.readValue(message, clazz);
+    }
+
+    @Override
+    public <T> List<T> deserialiseList(String json, Class<T> elementType) throws Exception {
+        JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, elementType);
+        return objectMapper.readValue(json, type);
     }
 }

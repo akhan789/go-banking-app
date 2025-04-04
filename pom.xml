@@ -89,6 +89,11 @@
                 <artifactId>account-management-service</artifactId>
                 <version>${revision}</version>
             </dependency>
+	        <dependency>
+	            <groupId>com.payter</groupId>
+	            <artifactId>balance-operations-service</artifactId>
+                <version>${revision}</version>
+	        </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-core</artifactId>

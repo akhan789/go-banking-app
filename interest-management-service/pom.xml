@@ -10,4 +10,24 @@
 		<version>${revision}</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
+
+	<dependencies>
+        <dependency>
+            <groupId>com.payter</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.payter</groupId>
+            <artifactId>account-management-service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.payter</groupId>
+            <artifactId>balance-operations-service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+	</dependencies>
 </project>
