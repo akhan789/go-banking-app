@@ -47,7 +47,7 @@ public class BalanceOperationsView extends AbstractView {
         JPanel transactionPanel = createTransactionPanel();
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, balancePanel, transactionPanel);
-        splitPane.setResizeWeight(0.3); // 30% left for account info, 70% right for actions
+        splitPane.setResizeWeight(0.3);
         splitPane.setEnabled(false);
         add(splitPane, BorderLayout.CENTER);
 

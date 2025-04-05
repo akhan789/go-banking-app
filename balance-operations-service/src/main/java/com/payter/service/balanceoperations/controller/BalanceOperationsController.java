@@ -6,10 +6,17 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 
+import com.payter.common.auth.Authenticator;
+import com.payter.common.dto.balanceoperations.BalanceOperationDTO;
+import com.payter.common.dto.balanceoperations.BalanceResponseDTO;
+import com.payter.common.dto.balanceoperations.CreditDebitRequestDTO;
+import com.payter.common.dto.balanceoperations.TransferRequestDTO;
+import com.payter.common.dto.gateway.ErrorResponseDTO;
 import com.payter.common.http.HttpClientService;
 import com.payter.common.parser.Parser;
 import com.payter.common.parser.ParserFactory;
 import com.payter.common.parser.ParserFactory.ParserType;
+import com.payter.common.util.ConfigUtil;
 import com.payter.service.balanceoperations.entity.BalanceOperation;
 import com.payter.service.balanceoperations.service.BalanceOperationsService;
 import com.sun.net.httpserver.HttpExchange;
@@ -23,26 +30,26 @@ import com.sun.net.httpserver.HttpExchange;
  */
 public class BalanceOperationsController {
 
-    // TODO: configurable.
-    private static final String VALID_API_KEY = "default_api_key";
-
+    private final Authenticator authenticator;
     private final BalanceOperationsService service;
     private final Parser parser = ParserFactory.getParser(ParserType.JSON);
 
-    public BalanceOperationsController(BalanceOperationsService service) {
+    public BalanceOperationsController(Authenticator authenticator, BalanceOperationsService service) {
+        this.authenticator = authenticator;
         this.service = service;
     }
 
     public void handle(HttpExchange exchange) throws IOException {
         try {
-            if(!isValidApiKey(exchange)) {
-                HttpClientService.sendResponse(exchange, 401, "{\"error\": \"Unauthorized\"}");
-                return;
-            }
-
             String path = exchange.getRequestURI().getPath();
             String method = exchange.getRequestMethod();
             String[] pathSegments = path.split("/");
+            String apiKey = exchange.getRequestHeaders().getFirst("X-API-Key");
+            if(!authenticator.isValidApiKey(apiKey)) {
+                ErrorResponseDTO error = new ErrorResponseDTO("Unauthorized - Invalid or missing API key");
+                HttpClientService.sendResponse(exchange, 401, parser.serialise(error));
+                return;
+            }
 
             switch(method) {
                 case "GET":
@@ -52,56 +59,109 @@ public class BalanceOperationsController {
                     handlePost(exchange, path, pathSegments);
                     break;
                 default:
-                    HttpClientService.sendResponse(exchange, 405, "{\"error\": \"Method Not Allowed\"}");
+                    ErrorResponseDTO error = new ErrorResponseDTO("Method Not Allowed");
+                    HttpClientService.sendResponse(exchange, 405, parser.serialise(error));
             }
         }
         catch(Exception e) {
             e.printStackTrace();
-            HttpClientService.sendResponse(exchange, 500, "{\"error\": \"Internal Server Error\"}");
+            ErrorResponseDTO error = new ErrorResponseDTO("Internal Server Error");
+            try {
+                HttpClientService.sendResponse(exchange, 500, parser.serialise(error));
+            }
+            catch(Exception e1) {
+                throw new IOException(e1);
+            }
         }
     }
 
     private void handleGet(HttpExchange exchange, String path, String[] pathSegments) throws Exception {
-        if(path.startsWith("/balanceoperations/balance/")) {
+        if(path.startsWith(ConfigUtil.loadProperty("balanceoperations.endpoint", "/balanceoperations")
+                + ConfigUtil.loadProperty("balanceoperations.balance.endpoint", "/balance"))) {
             if(pathSegments.length < 4 || pathSegments[3].isEmpty()) {
-                HttpClientService.sendResponse(exchange, 400, "{\"error\": \"Invalid account ID\"}");
+                ErrorResponseDTO error = new ErrorResponseDTO("Invalid account ID");
+                HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
                 return;
             }
             String accountId = pathSegments[3];
             BigDecimal balance = service.getBalance(accountId);
-            HttpClientService.sendResponse(exchange, 200, parser.serialise(balance));
+            BalanceResponseDTO response = new BalanceResponseDTO(balance);
+            HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
         }
     }
 
     private void handlePost(HttpExchange exchange, String path, String[] pathSegments) throws Exception {
         try(InputStream is = exchange.getRequestBody()) {
             String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-            BalanceOperation balanceOperation = parser.deserialise(body, BalanceOperation.class);
-            if(balanceOperation.getAccountId() == null || balanceOperation.getAmount() == null) {
-                HttpClientService.sendResponse(exchange, 400, "{\"error\": \"Missing required fields\"}");
-                return;
+            if(path.endsWith(ConfigUtil.loadProperty("balanceoperations.credit.endpoint", "/credit"))) {
+                postCredit(exchange, body);
             }
-            if(path.endsWith("/credit")) {
-                BalanceOperation created = service.processCredit(balanceOperation);
-                HttpClientService.sendResponse(exchange, 201, parser.serialise(created));
+            else if(path.endsWith(ConfigUtil.loadProperty("balanceoperations.debit.endpoint", "/debit"))) {
+                postDebit(exchange, body);
             }
-            else if(path.endsWith("/debit")) {
-                BalanceOperation created = service.processDebit(balanceOperation);
-                HttpClientService.sendResponse(exchange, 201, parser.serialise(created));
-            }
-            else if(path.endsWith("/transfer")) {
-                BalanceOperation transfer = service.processTransfer(balanceOperation.getAccountId(),
-                        balanceOperation.getToAccountId(), balanceOperation.getAmount());
-                HttpClientService.sendResponse(exchange, 201, parser.serialise(transfer));
+            else if(path.endsWith(ConfigUtil.loadProperty("balanceoperations.transfer.endpoint", "/transfer"))) {
+                postTransfer(exchange, body);
             }
             else {
-                HttpClientService.sendResponse(exchange, 400, "{\"error\": \"Invalid transaction type\"}");
+                ErrorResponseDTO error = new ErrorResponseDTO("Invalid transaction type");
+                HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
             }
         }
     }
 
-    private boolean isValidApiKey(HttpExchange exchange) {
-        String apiKey = exchange.getRequestHeaders().getFirst("X-API-Key");
-        return apiKey != null && apiKey.equals(VALID_API_KEY);
+    private void postCredit(HttpExchange exchange, String body) throws Exception {
+        CreditDebitRequestDTO request = parser.deserialise(body, CreditDebitRequestDTO.class);
+        if(request.getAccountId() == null || request.getAmount() == null) {
+            ErrorResponseDTO error = new ErrorResponseDTO("Missing required fields");
+            HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
+            return;
+        }
+
+        BalanceOperation operation = new BalanceOperation();
+        operation.setAccountId(request.getAccountId());
+        operation.setAmount(request.getAmount());
+        operation.setType(BalanceOperation.Type.CREDIT);
+        BalanceOperation created = service.credit(operation);
+        BalanceOperationDTO response = new BalanceOperationDTO(created.getId(), created.getAccountId(),
+                created.getToAccountId(), created.getAmount(), created.getType().name(), created.getTimestamp(),
+                created.getRelatedBalanceOperationId());
+        HttpClientService.sendResponse(exchange, 201, parser.serialise(response));
+
+    }
+
+    private void postDebit(HttpExchange exchange, String body) throws Exception {
+        CreditDebitRequestDTO request = parser.deserialise(body, CreditDebitRequestDTO.class);
+        if(request.getAccountId() == null || request.getAmount() == null) {
+            ErrorResponseDTO error = new ErrorResponseDTO("Missing required fields");
+            HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
+            return;
+        }
+
+        BalanceOperation operation = new BalanceOperation();
+        operation.setAccountId(request.getAccountId());
+        operation.setAmount(request.getAmount());
+        operation.setType(BalanceOperation.Type.DEBIT);
+        BalanceOperation created = service.debit(operation);
+        BalanceOperationDTO response = new BalanceOperationDTO(created.getId(), created.getAccountId(),
+                created.getToAccountId(), created.getAmount(), created.getType().name(), created.getTimestamp(),
+                created.getRelatedBalanceOperationId());
+        HttpClientService.sendResponse(exchange, 201, parser.serialise(response));
+
+    }
+
+    private void postTransfer(HttpExchange exchange, String body) throws Exception {
+        TransferRequestDTO request = parser.deserialise(body, TransferRequestDTO.class);
+        if(request.getFromAccountId() == null || request.getToAccountId() == null || request.getAmount() == null) {
+            ErrorResponseDTO error = new ErrorResponseDTO("Missing required fields");
+            HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
+            return;
+        }
+
+        BalanceOperation transfer = service.transfer(request.getFromAccountId(), request.getToAccountId(),
+                request.getAmount());
+        BalanceOperationDTO response = new BalanceOperationDTO(transfer.getId(), transfer.getAccountId(),
+                transfer.getToAccountId(), transfer.getAmount(), transfer.getType().name(), transfer.getTimestamp(),
+                transfer.getRelatedBalanceOperationId());
+        HttpClientService.sendResponse(exchange, 201, parser.serialise(response));
     }
 }

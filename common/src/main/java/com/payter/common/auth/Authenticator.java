@@ -1,5 +1,5 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
-package com.payter.service.gateway.auth;
+package com.payter.common.auth;
 
 /**
  * 

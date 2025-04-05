@@ -84,7 +84,15 @@ public class DefaultInterestManagementService implements InterestManagementServi
             InterestManagement interestManagement = repository.findLatest();
             String response = httpClientService.get("http://localhost:8001/accountmanagement");
             Parser parser = ParserFactory.getParser(ParserType.JSON);
-            List<Account> accounts = parser.deserialiseList(response, Account.class);
+            List<Account> accounts;
+            if(parser.isList(response)) {
+                accounts = parser.deserialiseList(response, Account.class);
+            }
+            else {
+                Account account = parser.deserialise(response, Account.class);
+                accounts = List.of(account);
+            }
+            boolean interestApplied = false;
             for(Account account : accounts) {
                 if(account.getStatus() == Status.ACTIVE) {
                     BigDecimal interest = calculateInterest(account.getBalance(), interestManagement.getDailyRate(),
@@ -95,10 +103,13 @@ public class DefaultInterestManagementService implements InterestManagementServi
                         balanceOperation.setAmount(interest);
                         String message = parser.serialise(balanceOperation);
                         httpClientService.post("http://localhost:8002/balanceoperations/credit", message);
+                        interestApplied = true;
                     }
                 }
             }
-            Util.logAudit(httpClientService, "Interest applied to active accounts");
+            if(interestApplied) {
+                Util.logAudit(httpClientService, "Interest applied to active accounts");
+            }
         }
         catch(Exception e) {
             e.printStackTrace();

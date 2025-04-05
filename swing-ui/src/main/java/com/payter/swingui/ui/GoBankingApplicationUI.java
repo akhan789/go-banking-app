@@ -12,6 +12,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
+import com.payter.common.util.ConfigUtil;
 import com.payter.swingui.view.AccountManagementView;
 import com.payter.swingui.view.AuditLoggingView;
 import com.payter.swingui.view.BalanceOperationsView;
@@ -33,7 +34,7 @@ public class GoBankingApplicationUI extends JFrame {
     private static final long serialVersionUID = -163076521878436580L;
 
     public GoBankingApplicationUI() {
-        setTitle("Go Banking App");
+        setTitle(ConfigUtil.loadProperty("ui.title", "Go Banking App"));
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -72,7 +73,6 @@ public class GoBankingApplicationUI extends JFrame {
         AuditLoggingView auditLoggingView = new AuditLoggingView(new AuditLoggingViewModel());
         tabbedPane.addTab("Audit Logging", auditLoggingView);
         add(tabbedPane, BorderLayout.CENTER);
-
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {

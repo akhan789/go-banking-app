@@ -165,13 +165,13 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
             creditBalanceOperation.setRelatedBalanceOperationId(savedDebitBalanceOperation.getId());
 
             // Save credit transaction
-            BalanceOperation savedCredit = save(creditBalanceOperation);
-            savedDebitBalanceOperation.setRelatedBalanceOperationId(savedCredit.getId());
+            BalanceOperation savedCreditBalanceOperation = save(creditBalanceOperation);
+            savedDebitBalanceOperation.setRelatedBalanceOperationId(savedCreditBalanceOperation.getId());
 
             // Update debit with related ID
             try(PreparedStatement stmt = conn
                     .prepareStatement("UPDATE balance_operations SET related_balance_operation_id = ? WHERE id = ?")) {
-                stmt.setLong(1, savedCredit.getId());
+                stmt.setLong(1, savedCreditBalanceOperation.getId());
                 stmt.setLong(2, savedDebitBalanceOperation.getId());
                 stmt.executeUpdate();
             }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -38,8 +39,14 @@ class JacksonJsonParser implements Parser {
     }
 
     @Override
-    public <T> List<T> deserialiseList(String json, Class<T> elementType) throws Exception {
+    public <T> List<T> deserialiseList(String message, Class<T> elementType) throws Exception {
         JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, elementType);
-        return objectMapper.readValue(json, type);
+        return objectMapper.readValue(message, type);
+    }
+
+    @Override
+    public boolean isList(String input) throws Exception {
+        JsonNode node = objectMapper.readTree(input);
+        return node.isArray();
     }
 }

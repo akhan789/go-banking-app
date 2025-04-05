@@ -20,7 +20,6 @@ public class AccountManagementViewModel {
         validateAccountName(accountName);
         double initialDeposit = validateDepositAmount(depositAmount);
         Account account = accountService.createAccount(accountName, initialDeposit, currency);
-
         if(account != null) {
             System.out.println("Account created: " + account.getAccountId());
         }

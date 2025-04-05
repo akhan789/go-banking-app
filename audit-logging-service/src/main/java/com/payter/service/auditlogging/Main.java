@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
+import com.payter.common.auth.SimpleAuthenticator;
+import com.payter.common.util.ConfigUtil;
 import com.payter.common.util.Util;
 import com.payter.service.auditlogging.controller.AuditLoggingController;
 import com.payter.service.auditlogging.repository.AuditLoggingRepository;
@@ -24,14 +26,16 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Util.createDbDirectoryIfNotExists();
-        try(Connection conn = DriverManager.getConnection("jdbc:sqlite:db/auditlogging.db")) {
+        try(Connection conn = DriverManager.getConnection(
+                ConfigUtil.loadProperty("auditlogging.db.connection.url", "jdbc:sqlite:db/auditlogging.db"))) {
             AuditLoggingRepository repository = new SQLiteAuditLoggingRepository(conn);
             AuditLoggingService service = new DefaultAuditLoggingService(repository);
-            AuditLoggingController controller = new AuditLoggingController(service);
-            HttpServer server = HttpServer.create(new InetSocketAddress(8004), 0);
-            server.createContext("/auditlogging", controller::handle);
+            AuditLoggingController controller = new AuditLoggingController(new SimpleAuthenticator(), service);
+            int port = Integer.valueOf(ConfigUtil.loadProperty("auditlogging.port", "8004"));
+            HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+            server.createContext(ConfigUtil.loadProperty("auditlogging.endpoint", "/auditlogging"), controller::handle);
             server.start();
-            System.out.println("Audit Logging Service running on port 8004...");
+            System.out.println("Audit Logging Service running on port " + port + "...");
         }
     }
 }

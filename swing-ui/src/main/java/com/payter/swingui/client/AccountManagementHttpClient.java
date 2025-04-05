@@ -1,6 +1,7 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.swingui.client;
 
+import com.payter.common.util.ConfigUtil;
 import com.payter.swingui.model.Account;
 
 /**
@@ -12,22 +13,16 @@ import com.payter.swingui.model.Account;
  */
 public class AccountManagementHttpClient extends AbstractHttpClient {
 
+    private static final String ENDPOINT = ConfigUtil.loadProperty("service.gateway.accountManagement.endpoint",
+            "/accountmanagement");
+
     public AccountManagementHttpClient() {
         super();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String getBaseUrl() {
-        return "http://localhost:8000";
-    }
-
-    // Create an account (POST request)
     public Account createAccount(Account account) {
         try {
-            return sendPostRequest("/accounts", convertToJSONString(account), Account.class);
+            return sendPostRequest(ENDPOINT, convertToJSONString(account), Account.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -35,10 +30,9 @@ public class AccountManagementHttpClient extends AbstractHttpClient {
         }
     }
 
-    // Get account details (GET request)
     public Account getAccount(String accountId) {
         try {
-            return sendGetRequest("/accounts/" + accountId, Account.class);
+            return sendGetRequest(ENDPOINT + "/" + accountId, Account.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -46,30 +40,27 @@ public class AccountManagementHttpClient extends AbstractHttpClient {
         }
     }
 
-    // Suspend an account (POST request for suspension)
     public void suspendAccount(String accountId) {
         try {
-            sendPostRequest("/accounts/" + accountId + "/suspend", null, Void.class);
+            sendPostRequest(ENDPOINT + "/" + accountId + "/suspend", null, Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
         }
     }
 
-    // Reactivate an account (POST request for reactivation)
     public void reactivateAccount(String accountId) {
         try {
-            sendPostRequest("/accounts/" + accountId + "/reactivate", null, Void.class);
+            sendPostRequest(ENDPOINT + "/" + accountId + "/reactivate", null, Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
         }
     }
 
-    // Close account (POST request for close)
     public void closeAccount(String accountId) {
         try {
-            sendPostRequest("/accounts/" + accountId + "/close", null, Void.class);
+            sendPostRequest(ENDPOINT + "/" + accountId + "/close", null, Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());

@@ -1,8 +1,13 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.service.gateway.controller;
 
-import java.io.IOException;
+import java.io.InputStream;
 
+import com.payter.common.dto.gateway.ErrorResponseDTO;
+import com.payter.common.http.HttpClientService;
+import com.payter.common.parser.Parser;
+import com.payter.common.parser.ParserFactory;
+import com.payter.common.parser.ParserFactory.ParserType;
 import com.payter.service.gateway.service.GatewayService;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -16,31 +21,44 @@ import com.sun.net.httpserver.HttpExchange;
 public class GatewayController {
 
     private final GatewayService service;
+    private final Parser parser = ParserFactory.getParser(ParserType.JSON);
 
     public GatewayController(GatewayService service) {
         this.service = service;
     }
 
-    public void handle(HttpExchange exchange) throws IOException {
+    public void handle(HttpExchange exchange) {
         try {
             String path = exchange.getRequestURI().getPath();
             String method = exchange.getRequestMethod();
-            String body = method.equals("POST") || method.equals("PUT")
-                    ? new String(exchange.getRequestBody().readAllBytes())
-                    : null;
+            String body = null;
+            if("POST".equals(method) || "PUT".equals(method)) {
+                try(InputStream inputStream = exchange.getRequestBody()) {
+                    body = new String(inputStream.readAllBytes());
+                }
+            }
             String apiKey = exchange.getRequestHeaders().getFirst("X-API-Key");
             String response = service.forwardRequest(path, method, body, apiKey);
-            sendResponse(exchange, getStatusCode(method, response), response);
+            HttpClientService.sendResponse(exchange, getStatusCode(method, response), response);
         }
         catch(Exception e) {
-            sendResponse(exchange, 500, "{\"error\": \"" + e.getMessage() + "\"}");
+            ErrorResponseDTO error = new ErrorResponseDTO(e.getMessage());
+            String errorResponse = null;
+            try {
+                errorResponse = parser.serialise(error);
+                HttpClientService.sendResponse(exchange, 500, errorResponse);
+            }
+            catch(Exception e1) {
+                System.err.println("ErrorResponse could not be serialised:\n" + errorResponse);
+            }
         }
     }
 
-    private int getStatusCode(String method, String response) {
+    private int getStatusCode(String method, String response) throws Exception {
         if(response.contains("error")) {
-            if(response.contains("Unauthorized"))
+            if(response.contains("Unauthorized")) {
                 return 401;
+            }
             return 400;
         }
         switch(method) {
@@ -52,15 +70,8 @@ public class GatewayController {
             case "DELETE":
                 return 204;
             default:
-                return 405;
-        }
-    }
-
-    private void sendResponse(HttpExchange exchange, int status, String response) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(status, response.length());
-        try(java.io.OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes());
+                ErrorResponseDTO error = new ErrorResponseDTO("Method Not Allowed");
+                throw new Exception(parser.serialise(error));
         }
     }
 }

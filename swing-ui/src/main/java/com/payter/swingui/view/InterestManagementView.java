@@ -26,7 +26,7 @@ public class InterestManagementView extends AbstractView {
     private static final long serialVersionUID = -455612526050486428L;
 
     private JTextField rateField = new JTextField(10);
-    private JComboBox<String> frequencyCombo = new JComboBox<>(new String[] {
+    private JComboBox<String> calculationFrequencyCombo = new JComboBox<>(new String[] {
             "DAILY", "WEEKLY", "MONTHLY"
     });
     private JButton setRateBtn = new JButton("Set Rate");
@@ -55,7 +55,7 @@ public class InterestManagementView extends AbstractView {
         gbc.gridy = 1;
         add(new JLabel("Calculation Frequency:"), gbc);
         gbc.gridx = 1;
-        add(frequencyCombo, gbc);
+        add(calculationFrequencyCombo, gbc);
 
         // Buttons
         gbc.gridx = 0;
@@ -88,7 +88,7 @@ public class InterestManagementView extends AbstractView {
         });
 
         setFrequencyBtn.addActionListener(ae -> {
-            String frequency = (String) frequencyCombo.getSelectedItem();
+            String frequency = (String) calculationFrequencyCombo.getSelectedItem();
             try {
                 this.interestVM.setCalculationFrequency(frequency);
             }
@@ -101,7 +101,6 @@ public class InterestManagementView extends AbstractView {
             int response = JOptionPane.showConfirmDialog(this,
                     "Would you like to force apply the interest rate to all accounts immediately?",
                     "Confirm Interest Application", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-
             try {
                 if(response == JOptionPane.YES_OPTION) {
                     this.interestVM.applyInterest(true);
@@ -121,7 +120,7 @@ public class InterestManagementView extends AbstractView {
 
         skipTimeBtn.addActionListener(ae -> {
             String periodsStr = JOptionPane.showInputDialog(this,
-                    "Enter the number of periods to skip (based on " + frequencyCombo.getSelectedItem() + "):",
+                    "Enter the number of periods to skip (based on " + calculationFrequencyCombo.getSelectedItem() + "):",
                     "Skip Time", JOptionPane.PLAIN_MESSAGE);
             if(periodsStr != null && !periodsStr.trim().isEmpty()) {
                 try {
@@ -130,11 +129,10 @@ public class InterestManagementView extends AbstractView {
                         showError("Number of periods must be positive.");
                         return;
                     }
-
-                    String frequency = (String) frequencyCombo.getSelectedItem();
-                    interestVM.skipTime(periods, frequency);
+                    String calculationFrequency = (String) calculationFrequencyCombo.getSelectedItem();
+                    interestVM.skipTime(periods, calculationFrequency);
                     JOptionPane.showMessageDialog(this,
-                            "Time skipped by " + periods + " " + frequency.toLowerCase() + " periods", "Success",
+                            "Time skipped by " + periods + " " + calculationFrequency.toLowerCase() + " periods", "Success",
                             JOptionPane.INFORMATION_MESSAGE);
                 }
                 catch(NumberFormatException e) {
@@ -161,11 +159,11 @@ public class InterestManagementView extends AbstractView {
     private void loadCalculationFrequency() {
         try {
             String calculationFrequency = interestVM.getCalculationFrequency();
-            frequencyCombo.setSelectedItem(calculationFrequency);
+            calculationFrequencyCombo.setSelectedItem(calculationFrequency);
         }
         catch(InterestManagementViewModelException e) {
             showError(e.getMessage());
-            frequencyCombo.setSelectedItem("MONTHLY");
+            calculationFrequencyCombo.setSelectedItem("MONTHLY");
         }
     }
 }

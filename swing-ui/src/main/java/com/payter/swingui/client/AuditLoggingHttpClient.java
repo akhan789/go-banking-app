@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.payter.common.util.ConfigUtil;
 import com.payter.swingui.model.AuditLoggingEntry;
 
 /**
@@ -16,17 +17,15 @@ import com.payter.swingui.model.AuditLoggingEntry;
  */
 public class AuditLoggingHttpClient extends AbstractHttpClient {
 
-    public AuditLoggingHttpClient() {
-    }
+    private static final String ENDPOINT = ConfigUtil.loadProperty("service.gateway.auditLogging.endpoint",
+            "/auditlogging");
 
-    @Override
-    protected String getBaseUrl() {
-        return "http://localhost:8003";
+    public AuditLoggingHttpClient() {
     }
 
     public List<AuditLoggingEntry> getAuditLogsAfter(long lastLogId) {
         try {
-            String endpoint = "/audit/logs?after=" + lastLogId;
+            String endpoint = ENDPOINT + "/logs?after=" + lastLogId;
             List<AuditLoggingEntry> logs = sendGetRequest(endpoint, new TypeReference<List<AuditLoggingEntry>>() {
             });
             return logs != null ? logs : Collections.emptyList();

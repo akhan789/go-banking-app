@@ -16,5 +16,7 @@ public interface Parser {
 
     public <T> T deserialise(String message, Class<T> clazz) throws Exception;
 
-    public <T> List<T> deserialiseList(String json, Class<T> elementType) throws Exception;
+    public <T> List<T> deserialiseList(String message, Class<T> elementType) throws Exception;
+
+    public boolean isList(String entity) throws Exception;
 }

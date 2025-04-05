@@ -1,5 +1,5 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
-package com.payter.service.gateway.auth;
+package com.payter.common.auth;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,8 +17,8 @@ public class SimpleAuthenticator implements Authenticator {
 
     public SimpleAuthenticator() {
         this.apiKeys = new HashMap<>();
-        apiKeys.put("user1", "api-key-12345");
-        apiKeys.put("user2", "api-key-67890");
+        // user and key.
+        apiKeys.put("default", "default_api_key");
     }
 
     @Override

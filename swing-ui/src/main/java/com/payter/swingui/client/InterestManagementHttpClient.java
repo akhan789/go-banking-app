@@ -1,6 +1,8 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.swingui.client;
 
+import com.payter.common.util.ConfigUtil;
+
 /**
  * 
  * 
@@ -10,18 +12,16 @@ package com.payter.swingui.client;
  */
 public class InterestManagementHttpClient extends AbstractHttpClient {
 
+    private static final String ENDPOINT = ConfigUtil.loadProperty("service.gateway.interestManagement.endpoint",
+            "/interestmanagement");
+
     public InterestManagementHttpClient() {
         super();
     }
 
-    @Override
-    protected String getBaseUrl() {
-        return "http://localhost:8002";
-    }
-
     public void setInterestRate(double rate) {
         try {
-            sendPostRequest("/interest/rate", String.valueOf(rate), Void.class);
+            sendPostRequest(ENDPOINT + "/rate", String.valueOf(rate), Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -30,7 +30,7 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public double getGlobalDailyRate() {
         try {
-            return sendGetRequest("/interest/rate", Double.class);
+            return sendGetRequest(ENDPOINT + "/rate", Double.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -40,7 +40,7 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public void setCalculationFrequency(String frequency) {
         try {
-            sendPostRequest("/interest/frequency", frequency, Void.class);
+            sendPostRequest(ENDPOINT + "/frequency", frequency, Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -49,7 +49,7 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public String getCalculationFrequency() {
         try {
-            return sendGetRequest("/interest/frequency", String.class);
+            return sendGetRequest(ENDPOINT + "/frequency", String.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -59,7 +59,7 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public void applyInterest(boolean force) {
         try {
-            sendPostRequest("/interest/apply", String.valueOf(force), Void.class);
+            sendPostRequest(ENDPOINT + "/apply", String.valueOf(force), Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());
@@ -68,7 +68,7 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public void skipTime(int periodsToSkip) {
         try {
-            sendPostRequest("/interest/skip-time", String.valueOf(periodsToSkip), Void.class);
+            sendPostRequest(ENDPOINT + "/skip-time", String.valueOf(periodsToSkip), Void.class);
         }
         catch(Exception e) {
             System.err.println(e.getMessage());

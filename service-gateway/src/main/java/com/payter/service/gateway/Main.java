@@ -3,8 +3,9 @@ package com.payter.service.gateway;
 
 import java.net.InetSocketAddress;
 
+import com.payter.common.auth.SimpleAuthenticator;
 import com.payter.common.http.HttpClientService;
-import com.payter.service.gateway.auth.SimpleAuthenticator;
+import com.payter.common.util.ConfigUtil;
 import com.payter.service.gateway.controller.GatewayController;
 import com.payter.service.gateway.service.DefaultGatewayService;
 import com.payter.service.gateway.service.GatewayService;
@@ -19,14 +20,15 @@ import com.sun.net.httpserver.HttpServer;
  */
 public class Main {
 
+    private static final int PORT = Integer.valueOf(ConfigUtil.loadProperty("gateway.port", "8000"));
+
     public static void main(String[] args) throws Exception {
         HttpClientService httpClientService = new HttpClientService();
-        SimpleAuthenticator authenticator = new SimpleAuthenticator();
-        GatewayService service = new DefaultGatewayService(authenticator, httpClientService);
+        GatewayService service = new DefaultGatewayService(new SimpleAuthenticator(), httpClientService);
         GatewayController controller = new GatewayController(service);
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/", controller::handle);
         server.start();
-        System.out.println("Service Gateway running on port 8084...");
+        System.out.println("Service Gateway running on port " + PORT + "...");
     }
 }

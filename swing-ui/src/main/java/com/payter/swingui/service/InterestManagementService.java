@@ -26,8 +26,8 @@ public class InterestManagementService {
         return interestManagementHttpClient.getGlobalDailyRate();
     }
 
-    public void setCalculationFrequency(String frequency) {
-        interestManagementHttpClient.setCalculationFrequency(frequency);
+    public void setCalculationFrequency(String calculationFrequency) {
+        interestManagementHttpClient.setCalculationFrequency(calculationFrequency);
     }
 
     public String getCalculationFrequency() {

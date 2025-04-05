@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.payter.common.util.ConfigUtil;
 
 /**
  * 
@@ -30,7 +31,9 @@ public abstract class AbstractHttpClient {
         OBJECT_MAPPER.registerModule(new JavaTimeModule());
     }
 
-    protected abstract String getBaseUrl();
+    protected String getBaseUrl() {
+        return ConfigUtil.loadProperty("service.gateway.baseUrl", "http://localhost:8000");
+    }
 
     @SuppressWarnings("unchecked")
     public <T> T sendGetRequest(String endpoint, Class<T> responseType) throws Exception {
@@ -41,7 +44,6 @@ public abstract class AbstractHttpClient {
             .header("Content-Type", "application/json")
             .build();
         //@formatter:on
-
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         if(response.statusCode() >= 200 && response.statusCode() < 300) {
             try {
@@ -66,7 +68,6 @@ public abstract class AbstractHttpClient {
             .header("Content-Type", "application/json")
             .build();
         //@formatter:on
-
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         if(response.statusCode() >= 200 && response.statusCode() < 300) {
             try {
@@ -90,7 +91,6 @@ public abstract class AbstractHttpClient {
             .header("Content-Type", "application/json")
             .build();
         //@formatter:on
-
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         if(response.statusCode() >= 200 && response.statusCode() < 300) {
             return responseType == Void.class ? null : OBJECT_MAPPER.readValue(response.body(), responseType);

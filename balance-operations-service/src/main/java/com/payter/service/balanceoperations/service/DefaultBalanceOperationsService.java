@@ -9,6 +9,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.payter.common.http.HttpClientService;
 import com.payter.common.parser.ParserFactory;
 import com.payter.common.parser.ParserFactory.ParserType;
+import com.payter.common.util.ConfigUtil;
 import com.payter.common.util.Util;
 import com.payter.service.accountmanagement.entity.Account;
 import com.payter.service.accountmanagement.entity.Account.Status;
@@ -42,7 +43,7 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
     }
 
     @Override
-    public BalanceOperation processCredit(BalanceOperation balanceOperation) throws Exception {
+    public BalanceOperation credit(BalanceOperation balanceOperation) throws Exception {
         Lock accountLock = getAccountLock(balanceOperation.getAccountId());
         accountLock.lock();
         try {
@@ -58,7 +59,7 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
     }
 
     @Override
-    public BalanceOperation processDebit(BalanceOperation balanceOperation) throws Exception {
+    public BalanceOperation debit(BalanceOperation balanceOperation) throws Exception {
         Lock accountLock = getAccountLock(balanceOperation.getAccountId());
         accountLock.lock();
         try {
@@ -78,7 +79,7 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
     }
 
     @Override
-    public BalanceOperation processTransfer(String fromAccountId, String toAccountId, BigDecimal amount)
+    public BalanceOperation transfer(String fromAccountId, String toAccountId, BigDecimal amount)
             throws Exception {
         Lock accountLock = getAccountLock(fromAccountId);
         accountLock.lock();
@@ -110,7 +111,10 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
     }
 
     private void validateAccountStatus(String accountId) throws Exception {
-        String response = httpClientService.get("http://localhost:8001/accountmanagement/" + accountId);
+        String response = httpClientService
+                .get(ConfigUtil.loadProperty("service.accountManagement.url", "http://localhost:8001")
+                        + ConfigUtil.loadProperty("service.accountManagement.endpoint", "/accountmanagement") + "/"
+                        + accountId);
         Account account = ParserFactory.getParser(ParserType.JSON).deserialise(response, Account.class);
         if(account.getStatus() != Status.ACTIVE) {
             throw new IllegalStateException("Account is not active");

@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import com.payter.common.util.ConfigUtil;
 import com.payter.swingui.viewmodel.AuditLoggingViewModel;
 
 /**
@@ -47,7 +48,7 @@ public class AuditLoggingView extends AbstractView {
             catch(Exception e) {
                 logArea.append(e.getMessage() + "\n");
             }
-        }, 0, 5, TimeUnit.SECONDS); // Poll every 5 seconds
+        }, 0, Integer.valueOf(ConfigUtil.loadProperty("service.auditlogging.polling.seconds", "5")), TimeUnit.SECONDS);
     }
 
     public void cleanup() {

@@ -5,7 +5,9 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
+import com.payter.common.auth.SimpleAuthenticator;
 import com.payter.common.http.HttpClientService;
+import com.payter.common.util.ConfigUtil;
 import com.payter.common.util.Util;
 import com.payter.service.accountmanagement.controller.AccountManagementController;
 import com.payter.service.accountmanagement.repository.AccountManagementRepository;
@@ -25,15 +27,23 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Util.createDbDirectoryIfNotExists();
-        try(Connection conn = DriverManager.getConnection("jdbc:sqlite:db/accountmanagement.db")) {
+        try(Connection conn = DriverManager.getConnection(ConfigUtil.loadProperty("accountmanagement.db.connection.url",
+                "jdbc:sqlite:db/accountmanagement.db"))) {
             HttpClientService httpClientService = new HttpClientService();
             AccountManagementRepository repository = new SQLiteAccountManagementRepository(conn);
             AccountManagementService service = new DefaultAccountManagementService(repository, httpClientService);
-            AccountManagementController controller = new AccountManagementController(service);
-            HttpServer server = HttpServer.create(new InetSocketAddress(8001), 0);
-            server.createContext("/accountmanagement", controller::handle);
+            AccountManagementController controller = new AccountManagementController(new SimpleAuthenticator(),
+                    service);
+            int port = Integer.valueOf(ConfigUtil.loadProperty("accountmanagement.port", "8001"));
+            HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+            server.createContext(ConfigUtil.loadProperty("accountManagement.endpoint", "/accountmanagement"),
+                    controller::handle);
             server.start();
-            System.out.println("Account Management Service running on port 8001...");
+            System.out.println("Account Management Service running on port " + port + "...");
+        }
+        catch(Exception e) {
+            System.err.println(e);
+            System.exit(1);
         }
     }
 }
