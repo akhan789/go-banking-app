@@ -11,10 +11,13 @@ import java.text.DecimalFormat;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
+import com.payter.swingui.model.Balance;
+import com.payter.swingui.model.BalanceOperation;
 import com.payter.swingui.viewmodel.BalanceOperationsViewModel;
 import com.payter.swingui.viewmodel.BalanceOperationsViewModelException;
 
@@ -37,7 +40,7 @@ public class BalanceOperationsView extends AbstractView {
     private JButton debitBtn = new JButton("Debit");
     private JButton transferBtn = new JButton("Transfer");
 
-    private BalanceOperationsViewModel balanceOpsVM;
+    private final BalanceOperationsViewModel balanceOpsVM;
 
     public BalanceOperationsView(BalanceOperationsViewModel balanceOpsVM) {
         this.balanceOpsVM = balanceOpsVM;
@@ -60,14 +63,12 @@ public class BalanceOperationsView extends AbstractView {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Account ID
         gbc.gridx = 0;
         gbc.gridy = 0;
         balancePanel.add(new JLabel("Account ID:"), gbc);
         gbc.gridx = 1;
         balancePanel.add(accountIdField, gbc);
 
-        // Balance
         gbc.gridx = 0;
         gbc.gridy = 1;
         balancePanel.add(new JLabel("Balance:"), gbc);
@@ -83,21 +84,18 @@ public class BalanceOperationsView extends AbstractView {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // To Account ID (only for transfer)
         gbc.gridx = 0;
         gbc.gridy = 0;
         transactionPanel.add(new JLabel("To Account ID:"), gbc);
         gbc.gridx = 1;
         transactionPanel.add(toAccountIdField, gbc);
 
-        // Amount Field
         gbc.gridx = 0;
         gbc.gridy = 1;
         transactionPanel.add(new JLabel("Amount:"), gbc);
         gbc.gridx = 1;
         transactionPanel.add(amountField, gbc);
 
-        // Credit and Debit buttons (centered)
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -105,8 +103,6 @@ public class BalanceOperationsView extends AbstractView {
         transactionPanel.add(creditBtn, gbc);
         gbc.gridy = 3;
         transactionPanel.add(debitBtn, gbc);
-
-        // Transfer button (below credit/debit)
         gbc.gridy = 4;
         transactionPanel.add(transferBtn, gbc);
 
@@ -117,14 +113,25 @@ public class BalanceOperationsView extends AbstractView {
         accountIdField.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent fe) {
-                double balance = balanceOpsVM.getBalance(accountIdField.getText());
-                balanceLabel.setText("$" + new DecimalFormat("0.00").format(balance));
+                try {
+                    Balance balance = balanceOpsVM.getBalance(accountIdField.getText());
+                    balanceLabel.setText("$" + new DecimalFormat("0.00").format(balance.getBalance()));
+                }
+                catch(BalanceOperationsViewModelException e) {
+                    showError(e.getMessage());
+                    balanceLabel.setText("$0.00");
+                }
             }
         });
 
         creditBtn.addActionListener(ae -> {
             try {
-                balanceOpsVM.credit(accountIdField.getText(), amountField.getText());
+                BalanceOperation operation = balanceOpsVM.credit(accountIdField.getText(), amountField.getText());
+                JOptionPane.showMessageDialog(this,
+                        "Credited: " + operation.getAmount() + " at " + operation.getTimestamp(), "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                updateBalance();
+                amountField.setText("");
             }
             catch(BalanceOperationsViewModelException e) {
                 showError(e.getMessage());
@@ -133,7 +140,12 @@ public class BalanceOperationsView extends AbstractView {
 
         debitBtn.addActionListener(ae -> {
             try {
-                balanceOpsVM.debit(accountIdField.getText(), amountField.getText());
+                BalanceOperation operation = balanceOpsVM.debit(accountIdField.getText(), amountField.getText());
+                JOptionPane.showMessageDialog(this,
+                        "Debited: " + operation.getAmount() + " at " + operation.getTimestamp(), "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                updateBalance();
+                amountField.setText("");
             }
             catch(BalanceOperationsViewModelException e) {
                 showError(e.getMessage());
@@ -142,11 +154,28 @@ public class BalanceOperationsView extends AbstractView {
 
         transferBtn.addActionListener(ae -> {
             try {
-                balanceOpsVM.transfer(accountIdField.getText(), toAccountIdField.getText(), amountField.getText());
+                BalanceOperation operation = balanceOpsVM.transfer(accountIdField.getText(), toAccountIdField.getText(),
+                        amountField.getText());
+                JOptionPane.showMessageDialog(this,
+                        "Transferred: " + operation.getAmount() + " to " + operation.getToAccountId(), "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                updateBalance();
+                amountField.setText("");
+                toAccountIdField.setText("");
             }
             catch(BalanceOperationsViewModelException e) {
                 showError(e.getMessage());
             }
         });
+    }
+
+    private void updateBalance() {
+        try {
+            Balance balance = balanceOpsVM.getBalance(accountIdField.getText());
+            balanceLabel.setText("$" + new DecimalFormat("0.00").format(balance.getBalance()));
+        }
+        catch(BalanceOperationsViewModelException e) {
+            balanceLabel.setText("$0.00");
+        }
     }
 }

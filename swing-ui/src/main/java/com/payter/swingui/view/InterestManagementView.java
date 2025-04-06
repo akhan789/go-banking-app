@@ -12,6 +12,8 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
+import com.payter.swingui.model.InterestFrequency;
+import com.payter.swingui.model.InterestRate;
 import com.payter.swingui.viewmodel.InterestManagementViewModel;
 import com.payter.swingui.viewmodel.InterestManagementViewModelException;
 
@@ -34,7 +36,7 @@ public class InterestManagementView extends AbstractView {
     private JButton applyBtn = new JButton("Apply Interest");
     private JButton skipTimeBtn = new JButton("Skip Time");
 
-    private InterestManagementViewModel interestVM;
+    private final InterestManagementViewModel interestVM;
 
     public InterestManagementView(InterestManagementViewModel interestVM) {
         this.interestVM = interestVM;
@@ -43,21 +45,18 @@ public class InterestManagementView extends AbstractView {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Global Interest Rate
         gbc.gridx = 0;
         gbc.gridy = 0;
         add(new JLabel("Global Daily Rate:"), gbc);
         gbc.gridx = 1;
         add(rateField, gbc);
 
-        // Frequency Selection
         gbc.gridx = 0;
         gbc.gridy = 1;
         add(new JLabel("Calculation Frequency:"), gbc);
         gbc.gridx = 1;
         add(calculationFrequencyCombo, gbc);
 
-        // Buttons
         gbc.gridx = 0;
         gbc.gridy = 2;
         add(setRateBtn, gbc);
@@ -80,7 +79,10 @@ public class InterestManagementView extends AbstractView {
         setRateBtn.addActionListener(ae -> {
             String rateText = rateField.getText();
             try {
-                this.interestVM.setInterestRate(rateText);
+                interestVM.setInterestRate(rateText);
+                JOptionPane.showMessageDialog(this, "Interest rate set to " + rateText + "%", "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                loadGlobalDailyRate();
             }
             catch(InterestManagementViewModelException e) {
                 showError(e.getMessage());
@@ -90,7 +92,9 @@ public class InterestManagementView extends AbstractView {
         setFrequencyBtn.addActionListener(ae -> {
             String frequency = (String) calculationFrequencyCombo.getSelectedItem();
             try {
-                this.interestVM.setCalculationFrequency(frequency);
+                interestVM.setCalculationFrequency(frequency);
+                JOptionPane.showMessageDialog(this, "Calculation frequency set to " + frequency, "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
             catch(InterestManagementViewModelException e) {
                 showError(e.getMessage());
@@ -101,27 +105,15 @@ public class InterestManagementView extends AbstractView {
             int response = JOptionPane.showConfirmDialog(this,
                     "Would you like to force apply the interest rate to all accounts immediately?",
                     "Confirm Interest Application", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-            try {
-                if(response == JOptionPane.YES_OPTION) {
-                    this.interestVM.applyInterest(true);
-                    JOptionPane.showMessageDialog(this, "Interest applied successfully", "Success",
-                            JOptionPane.INFORMATION_MESSAGE);
-                }
-                else {
-                    this.interestVM.applyInterest(false);
-                    JOptionPane.showMessageDialog(this, "Interest applied if applicable", "Success",
-                            JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-            catch(InterestManagementViewModelException e) {
-                showError(e.getMessage());
-            }
+            interestVM.applyInterest(response == JOptionPane.YES_OPTION);
+            JOptionPane.showMessageDialog(this,
+                    response == JOptionPane.YES_OPTION ? "Interest forced applied" : "Interest applied if applicable",
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
         });
 
         skipTimeBtn.addActionListener(ae -> {
-            String periodsStr = JOptionPane.showInputDialog(this,
-                    "Enter the number of periods to skip (based on " + calculationFrequencyCombo.getSelectedItem() + "):",
-                    "Skip Time", JOptionPane.PLAIN_MESSAGE);
+            String periodsStr = JOptionPane.showInputDialog(this, "Enter the number of periods to skip (based on "
+                    + calculationFrequencyCombo.getSelectedItem() + "):", "Skip Time", JOptionPane.PLAIN_MESSAGE);
             if(periodsStr != null && !periodsStr.trim().isEmpty()) {
                 try {
                     int periods = Integer.parseInt(periodsStr.trim());
@@ -129,10 +121,10 @@ public class InterestManagementView extends AbstractView {
                         showError("Number of periods must be positive.");
                         return;
                     }
-                    String calculationFrequency = (String) calculationFrequencyCombo.getSelectedItem();
-                    interestVM.skipTime(periods, calculationFrequency);
+                    String frequency = (String) calculationFrequencyCombo.getSelectedItem();
+                    interestVM.skipTime(periods, frequency);
                     JOptionPane.showMessageDialog(this,
-                            "Time skipped by " + periods + " " + calculationFrequency.toLowerCase() + " periods", "Success",
+                            "Time skipped by " + periods + " " + frequency.toLowerCase() + " periods", "Success",
                             JOptionPane.INFORMATION_MESSAGE);
                 }
                 catch(NumberFormatException e) {
@@ -147,8 +139,8 @@ public class InterestManagementView extends AbstractView {
 
     private void loadGlobalDailyRate() {
         try {
-            double globalDailyRate = interestVM.getGlobalDailyRate();
-            rateField.setText(new DecimalFormat("0.00").format(globalDailyRate));
+            InterestRate rate = interestVM.getGlobalDailyRate();
+            rateField.setText(new DecimalFormat("0.00").format(rate.getRate() * 100)); // Display as percentage
         }
         catch(InterestManagementViewModelException e) {
             showError(e.getMessage());
@@ -158,8 +150,8 @@ public class InterestManagementView extends AbstractView {
 
     private void loadCalculationFrequency() {
         try {
-            String calculationFrequency = interestVM.getCalculationFrequency();
-            calculationFrequencyCombo.setSelectedItem(calculationFrequency);
+            InterestFrequency frequency = interestVM.getCalculationFrequency();
+            calculationFrequencyCombo.setSelectedItem(frequency.getCalculationFrequency());
         }
         catch(InterestManagementViewModelException e) {
             showError(e.getMessage());

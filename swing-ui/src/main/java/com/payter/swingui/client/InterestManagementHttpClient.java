@@ -2,9 +2,10 @@
 package com.payter.swingui.client;
 
 import com.payter.common.util.ConfigUtil;
+import com.payter.swingui.model.InterestFrequency;
+import com.payter.swingui.model.InterestRate;
 
 /**
- * 
  * 
  * @author Abid Khan
  * @since 0.0.1_SNAPSHOT
@@ -21,20 +22,21 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public void setInterestRate(double rate) {
         try {
-            sendPostRequest(ENDPOINT + "/rate", String.valueOf(rate), Void.class);
+            sendPostRequest(ENDPOINT + "/rate", rate, Void.class);
         }
         catch(Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println("Failed to set interest rate: " + e.getMessage());
         }
     }
 
-    public double getGlobalDailyRate() {
+    public InterestRate getGlobalDailyRate() {
         try {
-            return sendGetRequest(ENDPOINT + "/rate", Double.class);
+            Double rate = sendGetRequest(ENDPOINT + "/rate", Double.class);
+            return new InterestRate(rate != null ? rate : 0.0);
         }
         catch(Exception e) {
-            System.err.println(e.getMessage());
-            return 0.0d;
+            System.err.println("Failed to get interest rate: " + e.getMessage());
+            return new InterestRate(0.0);
         }
     }
 
@@ -43,35 +45,36 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
             sendPostRequest(ENDPOINT + "/frequency", frequency, Void.class);
         }
         catch(Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println("Failed to set calculation frequency: " + e.getMessage());
         }
     }
 
-    public String getCalculationFrequency() {
+    public InterestFrequency getCalculationFrequency() {
         try {
-            return sendGetRequest(ENDPOINT + "/frequency", String.class);
+            String frequency = sendGetRequest(ENDPOINT + "/frequency", String.class);
+            return new InterestFrequency(frequency);
         }
         catch(Exception e) {
-            System.err.println(e.getMessage());
-            return null;
+            System.err.println("Failed to get calculation frequency: " + e.getMessage());
+            return new InterestFrequency();
         }
     }
 
     public void applyInterest(boolean force) {
         try {
-            sendPostRequest(ENDPOINT + "/apply", String.valueOf(force), Void.class);
+            sendPostRequest(ENDPOINT + "/apply", force, Void.class);
         }
         catch(Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println("Failed to apply interest: " + e.getMessage());
         }
     }
 
     public void skipTime(int periodsToSkip) {
         try {
-            sendPostRequest(ENDPOINT + "/skip-time", String.valueOf(periodsToSkip), Void.class);
+            sendPostRequest(ENDPOINT + "/skip-time", periodsToSkip, Void.class);
         }
         catch(Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println("Failed to skip time: " + e.getMessage());
         }
     }
 }

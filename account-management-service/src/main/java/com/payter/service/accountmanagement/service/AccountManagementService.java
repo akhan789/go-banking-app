@@ -1,6 +1,8 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.service.accountmanagement.service;
 
+import java.math.BigDecimal;
+
 import com.payter.service.accountmanagement.entity.Account;
 
 /**
@@ -12,6 +14,8 @@ import com.payter.service.accountmanagement.entity.Account;
  */
 public interface AccountManagementService {
 
+    Account getAccount(String accountId) throws Exception;
+
     Account createAccount(Account account) throws Exception;
 
     Account suspendAccount(String accountId) throws Exception;
@@ -20,5 +24,7 @@ public interface AccountManagementService {
 
     Account closeAccount(String accountId) throws Exception;
 
-    Account getAccount(String accountId) throws Exception;
+    Account creditAccount(String accountId, BigDecimal amount) throws Exception;
+
+    Account debitAccount(String accountId, BigDecimal amount) throws Exception;
 }

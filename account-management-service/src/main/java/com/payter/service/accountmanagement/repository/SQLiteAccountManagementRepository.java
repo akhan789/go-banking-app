@@ -1,6 +1,7 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.service.accountmanagement.repository;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -129,9 +130,9 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
 
     @Override
     public Account findByAccountId(String accountId) throws SQLException {
-        String findByIdQuery = "SELECT * FROM account_management WHERE account_id = ?";
+        String findByAccountIdQuery = "SELECT * FROM account_management WHERE account_id = ?";
         try(Connection conn = DriverManager.getConnection(dbUrl);
-                PreparedStatement stmt = conn.prepareStatement(findByIdQuery)) {
+                PreparedStatement stmt = conn.prepareStatement(findByAccountIdQuery)) {
             stmt.setString(1, accountId);
             try(ResultSet rs = stmt.executeQuery()) {
                 if(rs.next()) {
@@ -146,7 +147,6 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
                     catch(IllegalArgumentException | NullPointerException e) {
                         throw new SQLException("Invalid currency value in database", e);
                     }
-
                     try {
                         account.setStatus(Status.valueOf(rs.getString("status")));
                     }
@@ -180,7 +180,7 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
         //@formatter:off
         String updateStatusQuery = 
             "UPDATE account_management " +
-            "SET "+
+            "SET " +
                 "status = ?, " +
                 "status_history = COALESCE(status_history || '|', '') || ? " +
             "WHERE " +
@@ -193,6 +193,27 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
             stmt.setString(3, accountId);
             if(stmt.executeUpdate() == 0) {
                 throw new SQLException("Account with accountId " + accountId + " not found or status was not updated.");
+            }
+        }
+    }
+
+    @Override
+    public void updateBalance(String accountId, BigDecimal balance) throws SQLException {
+        if(accountId == null || accountId.trim().isEmpty()) {
+            throw new IllegalArgumentException("accountId cannot be null or empty.");
+        }
+        if(balance == null) {
+            throw new IllegalArgumentException("balance cannot be null.");
+        }
+        String updateBalanceQuery = "UPDATE account_management SET balance = ? WHERE account_id = ?";
+        try(Connection conn = DriverManager.getConnection(dbUrl);
+                PreparedStatement stmt = conn.prepareStatement(updateBalanceQuery)) {
+            stmt.setBigDecimal(1, balance);
+            stmt.setString(2, accountId);
+            int rowsAffected = stmt.executeUpdate();
+            if(rowsAffected == 0) {
+                throw new SQLException(
+                        "Account with accountId " + accountId + " not found or balance was not updated.");
             }
         }
     }

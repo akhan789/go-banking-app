@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -306,8 +305,7 @@ public class AccountDatabaseSimulator {
 
         private void logAuditEvent(String eventType, String details) {
             try {
-                String requestBody = OBJECT_MAPPER
-                        .writeValueAsString(new AuditLoggingEntry(eventType, details, LocalDateTime.now()));
+                String requestBody = OBJECT_MAPPER.writeValueAsString(new AuditLoggingEntry());
                 sendHttpRequest(AUDIT_LOG_URL, "POST", requestBody);
             }
             catch(Exception e) {

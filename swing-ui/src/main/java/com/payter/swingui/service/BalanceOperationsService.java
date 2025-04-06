@@ -2,8 +2,11 @@
 package com.payter.swingui.service;
 
 import com.payter.swingui.client.BalanceOperationsHttpClient;
+import com.payter.swingui.model.Balance;
+import com.payter.swingui.model.BalanceOperation;
 
 /**
+ * 
  * 
  * @author Abid Khan
  * @since 0.0.1_SNAPSHOT
@@ -11,25 +14,25 @@ import com.payter.swingui.client.BalanceOperationsHttpClient;
  */
 public class BalanceOperationsService {
 
-    private BalanceOperationsHttpClient balanceOperationsHttpClient;
+    private final BalanceOperationsHttpClient balanceOperationsHttpClient;
 
     public BalanceOperationsService() {
         this.balanceOperationsHttpClient = new BalanceOperationsHttpClient();
     }
 
-    public void credit(String accountId, double amount) {
-        balanceOperationsHttpClient.credit(accountId, amount);
+    public BalanceOperation credit(String accountId, double amount) {
+        return balanceOperationsHttpClient.credit(accountId, amount);
     }
 
-    public boolean debit(String accountId, double amount) {
+    public BalanceOperation debit(String accountId, double amount) {
         return balanceOperationsHttpClient.debit(accountId, amount);
     }
 
-    public boolean transfer(String fromAccountId, String toAccountId, double amount) {
+    public BalanceOperation transfer(String fromAccountId, String toAccountId, double amount) {
         return balanceOperationsHttpClient.transfer(fromAccountId, toAccountId, amount);
     }
 
-    public double getBalance(String accountId) {
+    public Balance getBalance(String accountId) {
         return balanceOperationsHttpClient.getBalance(accountId);
     }
 

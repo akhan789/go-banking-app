@@ -11,10 +11,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.payter.common.dto.gateway.ErrorResponseDTO;
 import com.payter.common.util.ConfigUtil;
 
 /**
- * 
  * 
  * @author Abid Khan
  * @since 0.0.1_SNAPSHOT
@@ -35,8 +35,7 @@ public abstract class AbstractHttpClient {
         return ConfigUtil.loadProperty("service.gateway.baseUrl", "http://localhost:8000");
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T sendGetRequest(String endpoint, Class<T> responseType) throws Exception {
+    protected <T> T sendGetRequest(String endpoint, Class<T> responseType) throws Exception {
         //@formatter:off
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(getBaseUrl() + endpoint))
@@ -45,23 +44,10 @@ public abstract class AbstractHttpClient {
             .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
-        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        if(response.statusCode() >= 200 && response.statusCode() < 300) {
-            try {
-                return OBJECT_MAPPER.readValue(response.body(), responseType);
-            }
-            catch(Exception e) {
-                return (T) response.body();
-            }
-        }
-        else {
-            throw new RuntimeException(
-                    "GET request failed with status: " + response.statusCode() + " - " + response.body());
-        }
+        return handleResponse(request, responseType);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T sendGetRequest(String endpoint, TypeReference<T> typeReference) throws Exception {
+    protected <T> T sendGetRequest(String endpoint, TypeReference<T> typeReference) throws Exception {
         //@formatter:off
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(getBaseUrl() + endpoint))
@@ -70,56 +56,62 @@ public abstract class AbstractHttpClient {
             .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
-        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        if(response.statusCode() >= 200 && response.statusCode() < 300) {
-            try {
-                return OBJECT_MAPPER.readValue(response.body(), typeReference);
-            }
-            catch(Exception e) {
-                return (T) response.body();
-            }
-        }
-        else {
-            throw new RuntimeException(
-                    "GET request failed with status: " + response.statusCode() + " - " + response.body());
-        }
+        return handleResponse(request, typeReference);
     }
 
-    public <T> T sendPutRequest(String endpoint, String requestBody, Class<T> responseType) throws Exception {
+    protected <T> T sendPostRequest(String endpoint, Object requestBody, Class<T> responseType) throws Exception {
+        String jsonBody = requestBody != null ? convertToJSONString(requestBody) : "";
         //@formatter:off
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(getBaseUrl() + endpoint))
-            .PUT(requestBody != null ? HttpRequest.BodyPublishers.ofString(requestBody) : HttpRequest.BodyPublishers.noBody())
+            .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
             .header("Content-Type", "application/json")
             .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
-        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        if(response.statusCode() >= 200 && response.statusCode() < 300) {
-            return responseType == Void.class ? null : OBJECT_MAPPER.readValue(response.body(), responseType);
-        }
-        else {
-            throw new RuntimeException(
-                    "PUT request failed with status: " + response.statusCode() + " - " + response.body());
-        }
+        return handleResponse(request, responseType);
     }
 
-    public <T> T sendPostRequest(String endpoint, String requestBody, Class<T> responseType) throws Exception {
+    protected <T> T sendPutRequest(String endpoint, Object requestBody, Class<T> responseType) throws Exception {
+        String jsonBody = requestBody != null ? convertToJSONString(requestBody) : "";
         //@formatter:off
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(getBaseUrl() + endpoint))
-            .POST(requestBody != null ? HttpRequest.BodyPublishers.ofString(requestBody) : HttpRequest.BodyPublishers.noBody())
+            .PUT(HttpRequest.BodyPublishers.ofString(jsonBody))
             .header("Content-Type", "application/json")
             .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
+        return handleResponse(request, responseType);
+    }
+
+    private <T> T handleResponse(HttpRequest request, Class<T> responseType) throws Exception {
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        if(response.statusCode() >= 200 && response.statusCode() < 300) {
-            return responseType == Void.class ? null : OBJECT_MAPPER.readValue(response.body(), responseType);
+        int statusCode = response.statusCode();
+        if(statusCode >= 200 && statusCode < 300) {
+            if(responseType == Void.class || response.body() == null || response.body().isEmpty()) {
+                return null;
+            }
+            return OBJECT_MAPPER.readValue(response.body(), responseType);
         }
         else {
-            throw new RuntimeException(
-                    "POST request failed with status: " + response.statusCode() + " - " + response.body());
+            ErrorResponseDTO error = OBJECT_MAPPER.readValue(response.body(), ErrorResponseDTO.class);
+            throw new RuntimeException("Request failed with status " + statusCode + ": " + error.getError());
+        }
+    }
+
+    private <T> T handleResponse(HttpRequest request, TypeReference<T> typeReference) throws Exception {
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        int statusCode = response.statusCode();
+        if(statusCode >= 200 && statusCode < 300) {
+            if(response.body() == null || response.body().isEmpty()) {
+                return null;
+            }
+            return OBJECT_MAPPER.readValue(response.body(), typeReference);
+        }
+        else {
+            ErrorResponseDTO error = OBJECT_MAPPER.readValue(response.body(), ErrorResponseDTO.class);
+            throw new RuntimeException("Request failed with status " + statusCode + ": " + error.getError());
         }
     }
 

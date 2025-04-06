@@ -9,15 +9,16 @@ import java.awt.Insets;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
+import com.payter.swingui.model.Account;
 import com.payter.swingui.viewmodel.AccountManagementViewModel;
 import com.payter.swingui.viewmodel.AccountViewModelException;
 
 /**
- * 
  * 
  * @author Abid Khan
  * @since 0.0.1_SNAPSHOT
@@ -39,7 +40,7 @@ public class AccountManagementView extends AbstractView {
     private JButton reactivateBtn = new JButton("Reactivate");
     private JButton closeBtn = new JButton("Close");
 
-    private AccountManagementViewModel accountVM;
+    private final AccountManagementViewModel accountVM;
 
     public AccountManagementView(AccountManagementViewModel accountVM) {
         this.accountVM = accountVM;
@@ -115,8 +116,12 @@ public class AccountManagementView extends AbstractView {
     private void setupListeners() {
         createBtn.addActionListener(ae -> {
             try {
-                accountVM.createAccount(nameField.getText(), depositField.getText(),
+                Account account = accountVM.createAccount(nameField.getText(), depositField.getText(),
                         (String) currencyCombo.getSelectedItem());
+                JOptionPane.showMessageDialog(this, "Account created: " + account.getAccountId(), "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                nameField.setText("");
+                depositField.setText("");
             }
             catch(AccountViewModelException e) {
                 showError(e.getMessage());
@@ -125,23 +130,32 @@ public class AccountManagementView extends AbstractView {
 
         suspendBtn.addActionListener(ae -> {
             try {
-                accountVM.suspendAccount(idField.getText());
+                Account account = accountVM.suspendAccount(idField.getText());
+                JOptionPane.showMessageDialog(this, "Account suspended: " + account.getAccountId(), "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
             catch(AccountViewModelException e) {
                 showError(e.getMessage());
             }
         });
+
         reactivateBtn.addActionListener(ae -> {
             try {
-                accountVM.reactivateAccount(idField.getText());
+                Account account = accountVM.reactivateAccount(idField.getText());
+                JOptionPane.showMessageDialog(this, "Account reactivated: " + account.getAccountId(), "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
             catch(AccountViewModelException e) {
                 showError(e.getMessage());
             }
         });
+
         closeBtn.addActionListener(ae -> {
             try {
-                accountVM.closeAccount(idField.getText());
+                Account account = accountVM.closeAccount(idField.getText());
+                JOptionPane.showMessageDialog(this, "Account closed: " + account.getAccountId(), "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                idField.setText("");
             }
             catch(AccountViewModelException e) {
                 showError(e.getMessage());

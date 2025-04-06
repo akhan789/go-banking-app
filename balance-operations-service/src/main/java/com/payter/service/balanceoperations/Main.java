@@ -2,8 +2,6 @@
 package com.payter.service.balanceoperations;
 
 import java.net.InetSocketAddress;
-import java.sql.Connection;
-import java.sql.DriverManager;
 
 import com.payter.common.auth.SimpleAuthenticator;
 import com.payter.common.http.HttpClientService;
@@ -27,19 +25,17 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Util.createDbDirectoryIfNotExists();
-        try(Connection conn = DriverManager.getConnection(ConfigUtil.loadProperty("balanceoperations.db.connection.url",
-                "jdbc:sqlite:db/balanceoperations.db"))) {
-            HttpClientService httpClientService = new HttpClientService();
-            BalanceOperationsRepository repository = new SQLiteBalanceOperationsRepository(conn);
-            BalanceOperationsService service = new DefaultBalanceOperationsService(repository, httpClientService);
-            BalanceOperationsController controller = new BalanceOperationsController(new SimpleAuthenticator(),
-                    service);
-            int port = Integer.valueOf(ConfigUtil.loadProperty("balanceoperations.port", "8002"));
-            HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-            server.createContext(ConfigUtil.loadProperty("balanceoperations.endpoint", "/balanceoperations"),
-                    controller::handle);
-            server.start();
-            System.out.println("Balance Operations Service running on port " + port + "...");
-        }
+        String dbUrl = ConfigUtil.loadProperty("balanceoperations.db.connection.url",
+                "jdbc:sqlite:db/balanceoperations.db");
+        HttpClientService httpClientService = new HttpClientService();
+        BalanceOperationsRepository repository = new SQLiteBalanceOperationsRepository(dbUrl);
+        BalanceOperationsService service = new DefaultBalanceOperationsService(repository, httpClientService);
+        BalanceOperationsController controller = new BalanceOperationsController(new SimpleAuthenticator(), service);
+        int port = Integer.valueOf(ConfigUtil.loadProperty("balanceoperations.port", "8002"));
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        server.createContext(ConfigUtil.loadProperty("balanceoperations.endpoint", "/balanceoperations"),
+                controller::handle);
+        server.start();
+        System.out.println("Balance Operations Service running on port " + port + "...");
     }
 }

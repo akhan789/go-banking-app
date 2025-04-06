@@ -12,46 +12,45 @@ import java.time.LocalDateTime;
  */
 public class AuditLoggingEntry {
 
-    private long id;
-    private String eventType;
-    private String details;
+    private Long id;
+    private String message;
     private LocalDateTime timestamp;
 
     public AuditLoggingEntry() {
     }
 
-    public AuditLoggingEntry(String eventType, String details, LocalDateTime timestamp) {
-        this.id = -1;
-        this.eventType = eventType;
-        this.details = details;
-        this.timestamp = timestamp;
-    }
-
-    public AuditLoggingEntry(long id, String eventType, String details, LocalDateTime timestamp) {
+    public AuditLoggingEntry(Long id, String message, LocalDateTime timestamp) {
         this.id = id;
-        this.eventType = eventType;
-        this.details = details;
+        this.message = message;
         this.timestamp = timestamp;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public String getEventType() {
-        return eventType;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getDetails() {
-        return details;
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
     @Override
     public String toString() {
-        return String.format("[%d] [%s] %s: %s", id, timestamp, eventType, details);
+        return "[" + (timestamp != null ? timestamp.toString() : "N/A") + "] " + message;
     }
 }

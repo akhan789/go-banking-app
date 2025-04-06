@@ -1,8 +1,8 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.service.balanceoperations.repository;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,10 +24,10 @@ import com.payter.service.balanceoperations.entity.BalanceOperation.Type;
  */
 public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepository {
 
-    private final Connection conn;
+    private final String dbUrl;
 
-    public SQLiteBalanceOperationsRepository(Connection conn) throws SQLException {
-        this.conn = conn;
+    public SQLiteBalanceOperationsRepository(final String dbUrl) throws SQLException {
+        this.dbUrl = dbUrl;
         createTable();
     }
 
@@ -36,13 +36,15 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
         String createTableQuery = 
             "CREATE TABLE IF NOT EXISTS balance_operations (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "account_id TEXT UNIQUE, " +
+                "account_id TEXT NOT NULL, " +
+                "to_account_id TEXT, " +
                 "amount NUMERIC, " +
-                "type TEXT, "+
-                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP"+
+                "type TEXT, " +
+                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, " +
+                "related_balance_operation_id INTEGER" +
             ")";
         //@formatter:on
-        try(Statement stmt = conn.createStatement()) {
+        try(Connection conn = DriverManager.getConnection(dbUrl); Statement stmt = conn.createStatement()) {
             stmt.execute(createTableQuery);
         }
         catch(SQLException e) {
@@ -52,41 +54,50 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
 
     @Override
     public BalanceOperation save(BalanceOperation balanceOperation) throws SQLException {
+        try(Connection conn = DriverManager.getConnection(dbUrl)) {
+            return save(balanceOperation, conn);
+        }
+    }
+
+    private BalanceOperation save(BalanceOperation balanceOperation, Connection conn) throws SQLException {
         //@formatter:off
         String saveQuery =
             "INSERT INTO balance_operations (" +
                 "account_id, " +
+                "to_account_id, " +
                 "amount, " +
                 "type, " +
-                "timestamp" +
+                "timestamp, " +
+                "related_balance_operation_id" +
             ") " +
-            "VALUES (?, ?, ?, ?)";
+            "VALUES (?, ?, ?, ?, ?, ?)";
         //@formatter:on
         try(PreparedStatement stmt = conn.prepareStatement(saveQuery, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, balanceOperation.getAccountId());
+            stmt.setString(2, balanceOperation.getToAccountId());
             if(balanceOperation.getAmount() != null) {
-                stmt.setBigDecimal(2, balanceOperation.getAmount());
+                stmt.setBigDecimal(3, balanceOperation.getAmount());
             }
             else {
-                stmt.setNull(2, Types.NUMERIC);
+                stmt.setNull(3, Types.NUMERIC);
             }
             if(balanceOperation.getType() != null) {
-                stmt.setString(3, balanceOperation.getType().name());
+                stmt.setString(4, balanceOperation.getType().name());
             }
             else {
-                stmt.setNull(3, Types.VARCHAR);
+                stmt.setNull(4, Types.VARCHAR);
             }
             if(balanceOperation.getTimestamp() != null) {
-                stmt.setTimestamp(4, Timestamp.valueOf(balanceOperation.getTimestamp()));
+                stmt.setTimestamp(5, Timestamp.valueOf(balanceOperation.getTimestamp()));
             }
             else {
-                stmt.setNull(4, Types.TIMESTAMP);
+                stmt.setNull(5, Types.TIMESTAMP);
             }
-            if(balanceOperation.getRelatedBalanceOperationId() != -1L) {
-                stmt.setLong(5, balanceOperation.getRelatedBalanceOperationId());
+            if(balanceOperation.getRelatedBalanceOperationId() != 0) { // Adjusted from -1L to 0
+                stmt.setLong(6, balanceOperation.getRelatedBalanceOperationId());
             }
             else {
-                stmt.setNull(5, Types.INTEGER);
+                stmt.setNull(6, Types.INTEGER);
             }
             stmt.executeUpdate();
             try(ResultSet rs = stmt.getGeneratedKeys()) {
@@ -100,27 +111,27 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
 
     @Override
     public List<BalanceOperation> findByAccountId(String accountId) throws SQLException {
-        String findByAccountId = "SELECT * FROM balance_operations WHERE account_id = ?";
+        String findByAccountIdQuery = "SELECT * FROM balance_operations WHERE account_id = ?";
         List<BalanceOperation> balanceOperations = new ArrayList<>();
-        try(PreparedStatement stmt = conn.prepareStatement(findByAccountId)) {
+        try(Connection conn = DriverManager.getConnection(dbUrl);
+                PreparedStatement stmt = conn.prepareStatement(findByAccountIdQuery)) {
             stmt.setString(1, accountId);
             try(ResultSet rs = stmt.executeQuery()) {
                 while(rs.next()) {
                     BalanceOperation balanceOperation = new BalanceOperation();
                     balanceOperation.setId(rs.getLong("id"));
                     balanceOperation.setAccountId(rs.getString("account_id"));
+                    balanceOperation.setToAccountId(rs.getString("to_account_id"));
                     balanceOperation.setAmount(rs.getBigDecimal("amount"));
                     balanceOperation.setType(Type.valueOf(rs.getString("type")));
                     Timestamp timestamp = rs.getTimestamp("timestamp");
                     if(timestamp != null) {
                         balanceOperation.setTimestamp(timestamp.toLocalDateTime());
                     }
-                    else {
-                        balanceOperation.setTimestamp(null);
-                    }
-                    balanceOperation.setRelatedBalanceOperationId(rs.getObject("related_balance_operation_id") != null
+                    Long relatedId = rs.getObject("related_balance_operation_id") != null
                             ? rs.getLong("related_balance_operation_id")
-                            : null);
+                            : 0L;
+                    balanceOperation.setRelatedBalanceOperationId(relatedId);
                     balanceOperations.add(balanceOperation);
                 }
             }
@@ -129,60 +140,31 @@ public class SQLiteBalanceOperationsRepository implements BalanceOperationsRepos
     }
 
     @Override
-    public BigDecimal calculateBalance(String accountId) throws SQLException {
-        String calculateBalanceQuery = "SELECT amount, type FROM balance_operations WHERE account_id = ?";
-        try(PreparedStatement stmt = conn.prepareStatement(calculateBalanceQuery)) {
-            stmt.setString(1, accountId);
-            try(ResultSet rs = stmt.executeQuery()) {
-                BigDecimal balance = BigDecimal.ZERO;
-                while(rs.next()) {
-                    BigDecimal amount = rs.getBigDecimal("amount");
-                    if(amount != null) {
-                        Type type = Type.valueOf(rs.getString("type"));
-                        if(type == Type.CREDIT
-                                || type == Type.TRANSFER && rs.getObject("related_balance_operation_id") != null) {
-                            balance = balance.add(amount);
-                        }
-                        else if(type == Type.DEBIT
-                                || type == Type.TRANSFER && rs.getObject("related_balance_operation_id") == null) {
-                            balance = balance.subtract(amount);
-                        }
-                    }
-                }
-                return balance;
-            }
-        }
-    }
-
-    @Override
-    public void saveTransfer(BalanceOperation debitBalanceOperation, BalanceOperation creditBalanceOperation)
-            throws Exception {
-        try {
+    public void saveTransfer(BalanceOperation debit, BalanceOperation credit) throws SQLException {
+        try(Connection conn = DriverManager.getConnection(dbUrl)) {
             conn.setAutoCommit(false);
+            try {
+                // Save debit
+                BalanceOperation savedDebit = save(debit, conn);
+                credit.setRelatedBalanceOperationId(savedDebit.getId());
 
-            // Save debit transaction
-            BalanceOperation savedDebitBalanceOperation = save(debitBalanceOperation);
-            creditBalanceOperation.setRelatedBalanceOperationId(savedDebitBalanceOperation.getId());
+                // Save credit
+                BalanceOperation savedCredit = save(credit, conn);
+                savedDebit.setRelatedBalanceOperationId(savedCredit.getId());
 
-            // Save credit transaction
-            BalanceOperation savedCreditBalanceOperation = save(creditBalanceOperation);
-            savedDebitBalanceOperation.setRelatedBalanceOperationId(savedCreditBalanceOperation.getId());
-
-            // Update debit with related ID
-            try(PreparedStatement stmt = conn
-                    .prepareStatement("UPDATE balance_operations SET related_balance_operation_id = ? WHERE id = ?")) {
-                stmt.setLong(1, savedCreditBalanceOperation.getId());
-                stmt.setLong(2, savedDebitBalanceOperation.getId());
-                stmt.executeUpdate();
+                // Update related ID for debit
+                try(PreparedStatement stmt = conn.prepareStatement(
+                        "UPDATE balance_operations SET related_balance_operation_id = ? WHERE id = ?")) {
+                    stmt.setLong(1, savedCredit.getId());
+                    stmt.setLong(2, savedDebit.getId());
+                    stmt.executeUpdate();
+                }
+                conn.commit();
             }
-            conn.commit();
-        }
-        catch(SQLException e) {
-            conn.rollback();
-            throw e;
-        }
-        finally {
-            conn.setAutoCommit(true);
+            catch(SQLException e) {
+                conn.rollback();
+                throw e;
+            }
         }
     }
 }

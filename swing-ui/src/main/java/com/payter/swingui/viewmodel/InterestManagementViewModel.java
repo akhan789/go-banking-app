@@ -1,6 +1,8 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.swingui.viewmodel;
 
+import com.payter.swingui.model.InterestFrequency;
+import com.payter.swingui.model.InterestRate;
 import com.payter.swingui.service.InterestManagementService;
 
 /**
@@ -11,7 +13,11 @@ import com.payter.swingui.service.InterestManagementService;
  */
 public class InterestManagementViewModel {
 
-    private InterestManagementService interestManagementService = new InterestManagementService();
+    private final InterestManagementService interestManagementService;
+
+    public InterestManagementViewModel() {
+        this.interestManagementService = new InterestManagementService();
+    }
 
     public void setInterestRate(String rateText) throws InterestManagementViewModelException {
         double rate = validateRate(rateText);
@@ -19,12 +25,13 @@ public class InterestManagementViewModel {
         System.out.println("Global interest rate set to: " + rate);
     }
 
-    public double getGlobalDailyRate() throws InterestManagementViewModelException {
-        try {
-            return interestManagementService.getGlobalDailyRate();
+    public InterestRate getGlobalDailyRate() throws InterestManagementViewModelException {
+        InterestRate rate = interestManagementService.getGlobalDailyRate();
+        if(rate != null) {
+            return rate;
         }
-        catch(Exception e) {
-            throw new InterestManagementViewModelException(e);
+        else {
+            throw new InterestManagementViewModelException("Failed to retrieve global daily rate.");
         }
     }
 
@@ -34,38 +41,32 @@ public class InterestManagementViewModel {
         System.out.println("Calculation frequency set to: " + frequency);
     }
 
-    public String getCalculationFrequency() throws InterestManagementViewModelException {
-        try {
-            return interestManagementService.getCalculationFrequency();
+    public InterestFrequency getCalculationFrequency() throws InterestManagementViewModelException {
+        InterestFrequency frequency = interestManagementService.getCalculationFrequency();
+        if(frequency != null) {
+            return frequency;
         }
-        catch(Exception e) {
-            throw new InterestManagementViewModelException(e);
+        else {
+            throw new InterestManagementViewModelException("Failed to retrieve calculation frequency.");
         }
     }
 
-    public void applyInterest(boolean force) throws InterestManagementViewModelException {
-        try {
-            interestManagementService.applyInterest(force);
-            System.out.println("Interest applied successfully via service if applicable");
-        }
-        catch(Exception e) {
-            throw new InterestManagementViewModelException(e);
-        }
+    public void applyInterest(boolean force) {
+        interestManagementService.applyInterest(force);
+        System.out.println("Interest applied successfully via service if applicable");
     }
 
     public void skipTime(int periods, String frequency) throws InterestManagementViewModelException {
         validateFrequency(frequency);
         int periodsToSkip = calculatePeriodsToSkip(periods, frequency);
-        try {
-            interestManagementService.skipTime(periodsToSkip);
-        }
-        catch(Exception e) {
-            throw new InterestManagementViewModelException("Failed to skip time: " + e.getMessage());
-        }
+        interestManagementService.skipTime(periodsToSkip);
+        System.out.println("Skipped " + periods + " " + frequency + " periods (" + periodsToSkip + " days)");
     }
 
-
     private double validateRate(String rateText) throws InterestManagementViewModelException {
+        if(rateText == null || rateText.trim().isEmpty()) {
+            throw new InterestManagementViewModelException("Rate cannot be null or empty.");
+        }
         double rate;
         try {
             rate = Double.parseDouble(rateText);
@@ -80,7 +81,7 @@ public class InterestManagementViewModel {
     }
 
     private void validateFrequency(String frequency) throws InterestManagementViewModelException {
-        if(frequency == null || frequency.isEmpty()) {
+        if(frequency == null || frequency.trim().isEmpty()) {
             throw new InterestManagementViewModelException("Frequency cannot be null or empty.");
         }
         if(!"DAILY|WEEKLY|MONTHLY".contains(frequency.toUpperCase())) {
@@ -88,7 +89,10 @@ public class InterestManagementViewModel {
         }
     }
 
-    private int calculatePeriodsToSkip(int periods, String frequency) {
+    private int calculatePeriodsToSkip(int periods, String frequency) throws InterestManagementViewModelException {
+        if(periods < 0) {
+            throw new InterestManagementViewModelException("Periods to skip must be non-negative.");
+        }
         switch(frequency.toUpperCase()) {
             case "DAILY":
                 return periods;
@@ -97,8 +101,7 @@ public class InterestManagementViewModel {
             case "MONTHLY":
                 return periods * 30;
             default:
-                // Fallback to daily
-                return periods;
+                throw new InterestManagementViewModelException("Unexpected frequency: " + frequency);
         }
     }
 }

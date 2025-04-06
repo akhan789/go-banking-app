@@ -87,7 +87,10 @@ public class BalanceOperationsController {
             BigDecimal balance = service.getBalance(accountId);
             BalanceResponseDTO response = new BalanceResponseDTO(balance);
             HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
+            return;
         }
+        ErrorResponseDTO error = new ErrorResponseDTO("Path parameters invalid");
+        HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
     }
 
     private void handlePost(HttpExchange exchange, String path, String[] pathSegments) throws Exception {

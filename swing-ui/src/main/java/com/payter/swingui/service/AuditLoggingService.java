@@ -15,7 +15,11 @@ import com.payter.swingui.model.AuditLoggingEntry;
  */
 public class AuditLoggingService {
 
-    private AuditLoggingHttpClient auditClient = new AuditLoggingHttpClient();
+    private final AuditLoggingHttpClient auditClient;
+
+    public AuditLoggingService() {
+        this.auditClient = new AuditLoggingHttpClient();
+    }
 
     public List<AuditLoggingEntry> getAuditLogsAfter(long lastLogId) {
         return auditClient.getAuditLogsAfter(lastLogId);

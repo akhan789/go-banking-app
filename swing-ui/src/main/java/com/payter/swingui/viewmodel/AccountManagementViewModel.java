@@ -6,60 +6,85 @@ import com.payter.swingui.service.AccountManagementService;
 
 /**
  * 
- * 
  * @author Abid Khan
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
 public class AccountManagementViewModel {
 
-    private AccountManagementService accountService = new AccountManagementService();
+    private final AccountManagementService accountService;
 
-    public void createAccount(String accountName, String depositAmount, String currency)
+    public AccountManagementViewModel() {
+        this.accountService = new AccountManagementService();
+    }
+
+    public Account createAccount(String accountName, String depositAmount, String currency)
             throws AccountViewModelException {
         validateAccountName(accountName);
         double initialDeposit = validateDepositAmount(depositAmount);
         Account account = accountService.createAccount(accountName, initialDeposit, currency);
         if(account != null) {
             System.out.println("Account created: " + account.getAccountId());
+            return account;
+        }
+        else {
+            throw new AccountViewModelException("Failed to create account.");
         }
     }
 
-    public void suspendAccount(String accountId) throws AccountViewModelException {
+    public Account suspendAccount(String accountId) throws AccountViewModelException {
         validateAccountId(accountId);
-        accountService.suspendAccount(accountId);
-        System.out.println("Account suspended: " + accountId);
+        Account updatedAccount = accountService.suspendAccount(accountId);
+        if(updatedAccount != null) {
+            System.out.println("Account suspended: " + accountId);
+            return updatedAccount;
+        }
+        else {
+            throw new AccountViewModelException("Failed to suspend account: " + accountId);
+        }
     }
 
-    public void reactivateAccount(String accountId) throws AccountViewModelException {
+    public Account reactivateAccount(String accountId) throws AccountViewModelException {
         validateAccountId(accountId);
-        accountService.reactivateAccount(accountId);
-        System.out.println("Account reactivated: " + accountId);
+        Account updatedAccount = accountService.reactivateAccount(accountId);
+        if(updatedAccount != null) {
+            System.out.println("Account reactivated: " + accountId);
+            return updatedAccount;
+        }
+        else {
+            throw new AccountViewModelException("Failed to reactivate account: " + accountId);
+        }
     }
 
-    public void closeAccount(String accountId) throws AccountViewModelException {
+    public Account closeAccount(String accountId) throws AccountViewModelException {
         validateAccountId(accountId);
-        accountService.closeAccount(accountId);
-        System.out.println("Account closed: " + accountId);
+        Account updatedAccount = accountService.closeAccount(accountId);
+        if(updatedAccount != null) {
+            System.out.println("Account closed: " + accountId);
+            return updatedAccount;
+        }
+        else {
+            throw new AccountViewModelException("Failed to close account: " + accountId);
+        }
     }
 
     private void validateAccountName(String accountName) throws AccountViewModelException {
-        if(accountName == null || accountName.isEmpty()) {
-            throw new AccountViewModelException("Account Name can not be null or empty.");
+        if(accountName == null || accountName.trim().isEmpty()) {
+            throw new AccountViewModelException("Account Name cannot be null or empty.");
         }
     }
 
     private void validateAccountId(String accountId) throws AccountViewModelException {
-        if(accountId == null || accountId.isEmpty()) {
-            throw new AccountViewModelException("Account Id can not be null or empty.");
+        if(accountId == null || accountId.trim().isEmpty()) {
+            throw new AccountViewModelException("Account Id cannot be null or empty.");
         }
     }
 
     private double validateDepositAmount(String depositAmount) throws AccountViewModelException {
-        if(depositAmount == null || depositAmount.isEmpty()) {
-            throw new AccountViewModelException("Deposit amount can not be null or empty.");
+        if(depositAmount == null || depositAmount.trim().isEmpty()) {
+            throw new AccountViewModelException("Deposit amount cannot be null or empty.");
         }
-        double initialDeposit = 0.0d;
+        double initialDeposit;
         try {
             initialDeposit = Double.parseDouble(depositAmount);
         }

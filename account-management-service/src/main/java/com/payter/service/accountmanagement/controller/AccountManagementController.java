@@ -3,7 +3,9 @@ package com.payter.service.accountmanagement.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.UUID;
 
 import com.payter.common.auth.Authenticator;
@@ -81,7 +83,7 @@ public class AccountManagementController {
         }
         catch(Exception e) {
             e.printStackTrace();
-            ErrorResponseDTO error = new ErrorResponseDTO("Internal Server Error");
+            ErrorResponseDTO error = new ErrorResponseDTO("Internal Server Error: " + e.getMessage());
             try {
                 HttpClientService.sendResponse(exchange, 500, parser.serialise(error));
             }
@@ -124,6 +126,19 @@ public class AccountManagementController {
                     updated.getCreationTime(), updated.getStatusHistory());
             HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
         }
+        else if(path.endsWith("/credit") || path.endsWith("/debit")) {
+            try(InputStream is = exchange.getRequestBody()) {
+                String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                Map<String, String> request = parser.deserialise(body, Map.class);
+                BigDecimal amount = new BigDecimal(request.get("amount"));
+                Account updated = path.endsWith("/credit") ? service.creditAccount(accountId, amount)
+                        : service.debitAccount(accountId, amount);
+                AccountDTO response = new AccountDTO(updated.getId(), updated.getAccountId(), updated.getAccountName(),
+                        updated.getBalance(), updated.getStatus().name(), updated.getCurrency().name(),
+                        updated.getCreationTime(), updated.getStatusHistory());
+                HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
+            }
+        }
         else {
             ErrorResponseDTO error = new ErrorResponseDTO("Invalid request");
             HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
@@ -134,8 +149,13 @@ public class AccountManagementController {
         try(InputStream is = exchange.getRequestBody()) {
             String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             CreateAccountRequestDTO request = parser.deserialise(body, CreateAccountRequestDTO.class);
-            Account account = new Account(UUID.randomUUID().toString().split("-")[0], request.getAccountName(),
-                    request.getBalance(),
+            if(request.getAccountName() == null || request.getBalance() == null) {
+                ErrorResponseDTO error = new ErrorResponseDTO("Missing required fields: accountName or balance");
+                HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
+                return;
+            }
+            Account account = new Account(UUID.randomUUID().toString().split("-")[0], // Generate unique ID
+                    request.getAccountName(), request.getBalance(),
                     request.getCurrency() != null ? Account.Currency.valueOf(request.getCurrency())
                             : Account.Currency.GBP);
             Account created = service.createAccount(account);
@@ -148,8 +168,11 @@ public class AccountManagementController {
 
     private void handleDelete(HttpExchange exchange, String[] pathSegments) throws Exception {
         String accountId = parseAccountId(pathSegments);
-        service.closeAccount(accountId);
-        HttpClientService.sendResponse(exchange, 204, "");
+        Account updated = service.closeAccount(accountId);
+        AccountDTO response = new AccountDTO(updated.getId(), updated.getAccountId(), updated.getAccountName(),
+                updated.getBalance(), updated.getStatus().name(), updated.getCurrency().name(),
+                updated.getCreationTime(), updated.getStatusHistory());
+        HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
     }
 
     private String parseAccountId(String[] pathSegments) throws NumberFormatException {
