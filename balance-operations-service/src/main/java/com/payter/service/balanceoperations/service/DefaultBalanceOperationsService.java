@@ -2,6 +2,8 @@
 package com.payter.service.balanceoperations.service;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -79,8 +81,7 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
     }
 
     @Override
-    public BalanceOperation transfer(String fromAccountId, String toAccountId, BigDecimal amount)
-            throws Exception {
+    public BalanceOperation transfer(String fromAccountId, String toAccountId, BigDecimal amount) throws Exception {
         Lock accountLock = getAccountLock(fromAccountId);
         accountLock.lock();
         try {
@@ -111,8 +112,10 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
     }
 
     private void validateAccountStatus(String accountId) throws Exception {
-        String response = httpClientService
-                .get(ConfigUtil.loadProperty("service.accountManagement.url", "http://localhost:8001")
+        Map<String, String> headers = new HashMap<>();
+        headers.put("X-API-Key", "internal");
+        String response = httpClientService.get(headers,
+                ConfigUtil.loadProperty("service.accountManagement.url", "http://localhost:8001")
                         + ConfigUtil.loadProperty("service.accountManagement.endpoint", "/accountmanagement") + "/"
                         + accountId);
         Account account = ParserFactory.getParser(ParserType.JSON).deserialise(response, Account.class);

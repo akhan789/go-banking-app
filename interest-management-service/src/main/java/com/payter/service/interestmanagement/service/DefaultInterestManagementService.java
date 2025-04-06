@@ -11,6 +11,7 @@ import com.payter.common.http.HttpClientService;
 import com.payter.common.parser.Parser;
 import com.payter.common.parser.ParserFactory;
 import com.payter.common.parser.ParserFactory.ParserType;
+import com.payter.common.util.ConfigUtil;
 import com.payter.common.util.Util;
 import com.payter.service.accountmanagement.entity.Account;
 import com.payter.service.accountmanagement.entity.Account.Status;
@@ -82,7 +83,9 @@ public class DefaultInterestManagementService implements InterestManagementServi
     private void applyInterest() {
         try {
             InterestManagement interestManagement = repository.findLatest();
-            String response = httpClientService.get("http://localhost:8001/accountmanagement");
+            String response = httpClientService.get(null,
+                    ConfigUtil.loadProperty("service.accountmanagement.url", "http://localhost:8001")
+                            + ConfigUtil.loadProperty("service.accountmanagement.endpoint", "/accountmanagement"));
             Parser parser = ParserFactory.getParser(ParserType.JSON);
             List<Account> accounts;
             if(parser.isList(response)) {
@@ -102,7 +105,13 @@ public class DefaultInterestManagementService implements InterestManagementServi
                         balanceOperation.setAccountId(account.getAccountId());
                         balanceOperation.setAmount(interest);
                         String message = parser.serialise(balanceOperation);
-                        httpClientService.post("http://localhost:8002/balanceoperations/credit", message);
+                        httpClientService.post(null,
+                                ConfigUtil.loadProperty("service.balanceoperations.url", "http://localhost:8002")
+                                        + ConfigUtil.loadProperty("service.balanceoperations.endpoint",
+                                                "/balanceoperations")
+                                        + ConfigUtil.loadProperty("service.balanceoperations.credit.endpoint",
+                                                "/credit"),
+                                message);
                         interestApplied = true;
                     }
                 }

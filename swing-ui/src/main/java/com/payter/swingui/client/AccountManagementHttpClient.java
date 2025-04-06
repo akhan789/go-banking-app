@@ -20,21 +20,23 @@ public class AccountManagementHttpClient extends AbstractHttpClient {
         super();
     }
 
-    public Account createAccount(Account account) {
-        try {
-            return sendPostRequest(ENDPOINT, convertToJSONString(account), Account.class);
-        }
-        catch(Exception e) {
-            System.err.println(e.getMessage());
-            return null;
-        }
-    }
-
     public Account getAccount(String accountId) {
         try {
             return sendGetRequest(ENDPOINT + "/" + accountId, Account.class);
         }
         catch(Exception e) {
+            e.printStackTrace();
+            System.err.println(e.getMessage());
+            return null;
+        }
+    }
+
+    public Account createAccount(Account account) {
+        try {
+            return sendPostRequest(ENDPOINT, convertToJSONString(account), Account.class);
+        }
+        catch(Exception e) {
+            e.printStackTrace();
             System.err.println(e.getMessage());
             return null;
         }
@@ -42,27 +44,30 @@ public class AccountManagementHttpClient extends AbstractHttpClient {
 
     public void suspendAccount(String accountId) {
         try {
-            sendPostRequest(ENDPOINT + "/" + accountId + "/suspend", null, Void.class);
+            sendPutRequest(ENDPOINT + "/" + accountId + "/suspend", null, Void.class);
         }
         catch(Exception e) {
+            e.printStackTrace();
             System.err.println(e.getMessage());
         }
     }
 
     public void reactivateAccount(String accountId) {
         try {
-            sendPostRequest(ENDPOINT + "/" + accountId + "/reactivate", null, Void.class);
+            sendPutRequest(ENDPOINT + "/" + accountId + "/reactivate", null, Void.class);
         }
         catch(Exception e) {
+            e.printStackTrace();
             System.err.println(e.getMessage());
         }
     }
 
     public void closeAccount(String accountId) {
         try {
-            sendPostRequest(ENDPOINT + "/" + accountId + "/close", null, Void.class);
+            sendPutRequest(ENDPOINT + "/" + accountId + "/close", null, Void.class);
         }
         catch(Exception e) {
+            e.printStackTrace();
             System.err.println(e.getMessage());
         }
     }

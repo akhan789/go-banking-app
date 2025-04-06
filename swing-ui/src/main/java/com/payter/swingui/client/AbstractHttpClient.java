@@ -42,6 +42,7 @@ public abstract class AbstractHttpClient {
             .uri(URI.create(getBaseUrl() + endpoint))
             .GET()
             .header("Content-Type", "application/json")
+            .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
@@ -66,6 +67,7 @@ public abstract class AbstractHttpClient {
             .uri(URI.create(getBaseUrl() + endpoint))
             .GET()
             .header("Content-Type", "application/json")
+            .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
@@ -83,12 +85,32 @@ public abstract class AbstractHttpClient {
         }
     }
 
+    public <T> T sendPutRequest(String endpoint, String requestBody, Class<T> responseType) throws Exception {
+        //@formatter:off
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(getBaseUrl() + endpoint))
+            .PUT(requestBody != null ? HttpRequest.BodyPublishers.ofString(requestBody) : HttpRequest.BodyPublishers.noBody())
+            .header("Content-Type", "application/json")
+            .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
+            .build();
+        //@formatter:on
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        if(response.statusCode() >= 200 && response.statusCode() < 300) {
+            return responseType == Void.class ? null : OBJECT_MAPPER.readValue(response.body(), responseType);
+        }
+        else {
+            throw new RuntimeException(
+                    "PUT request failed with status: " + response.statusCode() + " - " + response.body());
+        }
+    }
+
     public <T> T sendPostRequest(String endpoint, String requestBody, Class<T> responseType) throws Exception {
         //@formatter:off
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(getBaseUrl() + endpoint))
             .POST(requestBody != null ? HttpRequest.BodyPublishers.ofString(requestBody) : HttpRequest.BodyPublishers.noBody())
             .header("Content-Type", "application/json")
+            .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());

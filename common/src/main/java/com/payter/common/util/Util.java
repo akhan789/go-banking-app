@@ -3,6 +3,8 @@
 package com.payter.common.util;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.payter.common.http.HttpClientService;
 
@@ -20,8 +22,7 @@ public final class Util {
     }
 
     public static void createDbDirectoryIfNotExists() {
-        // TODO: configurable.
-        String dbDirectory = "db";
+        String dbDirectory = ConfigUtil.loadProperty("util.db.directory", "db");
         File directory = new File(dbDirectory);
         if(!directory.exists()) {
             directory.mkdirs();
@@ -33,7 +34,11 @@ public final class Util {
         int retries = 3;
         while(retries > 0) {
             try {
-                httpClientService.postAsync("http://localhost:8004/auditlogging", message);
+                Map<String, String> headers = new HashMap<>();
+                headers.put("X-API-Key", "internal");
+                httpClientService.postAsync(headers,
+                        ConfigUtil.loadProperty("util.auditlogging.endpoint", "http://localhost:8004/auditlogging"),
+                        message);
                 return;
             }
             catch(Exception e) {

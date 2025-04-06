@@ -4,6 +4,7 @@ package com.payter.service.accountmanagement.controller;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import com.payter.common.auth.Authenticator;
 import com.payter.common.dto.accountmanagement.AccountDTO;
@@ -45,12 +46,6 @@ public class AccountManagementController {
             if(!authenticator.isValidApiKey(apiKey)) {
                 ErrorResponseDTO error = new ErrorResponseDTO("Unauthorized - Invalid or missing API key");
                 HttpClientService.sendResponse(exchange, 401, parser.serialise(error));
-                return;
-            }
-
-            if(pathSegments.length < 3) {
-                ErrorResponseDTO error = new ErrorResponseDTO("Invalid request format");
-                HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
                 return;
             }
 
@@ -123,8 +118,11 @@ public class AccountManagementController {
             HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
         }
         else if(path.endsWith(ConfigUtil.loadProperty("accountManagement.close.endpoint", "/close"))) {
-            service.closeAccount(accountId);
-            HttpClientService.sendResponse(exchange, 204, "");
+            Account updated = service.closeAccount(accountId);
+            AccountDTO response = new AccountDTO(updated.getId(), updated.getAccountId(), updated.getAccountName(),
+                    updated.getBalance(), updated.getStatus().name(), updated.getCurrency().name(),
+                    updated.getCreationTime(), updated.getStatusHistory());
+            HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
         }
         else {
             ErrorResponseDTO error = new ErrorResponseDTO("Invalid request");
@@ -136,12 +134,8 @@ public class AccountManagementController {
         try(InputStream is = exchange.getRequestBody()) {
             String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             CreateAccountRequestDTO request = parser.deserialise(body, CreateAccountRequestDTO.class);
-            if(request.getAccountId() == null) {
-                ErrorResponseDTO error = new ErrorResponseDTO("Missing required field: accountId");
-                HttpClientService.sendResponse(exchange, 400, parser.serialise(error));
-                return;
-            }
-            Account account = new Account(request.getAccountId(), request.getAccountName(), request.getBalance(),
+            Account account = new Account(UUID.randomUUID().toString().split("-")[0], request.getAccountName(),
+                    request.getBalance(),
                     request.getCurrency() != null ? Account.Currency.valueOf(request.getCurrency())
                             : Account.Currency.GBP);
             Account created = service.createAccount(account);

@@ -18,7 +18,7 @@ public interface AccountManagementService {
 
     Account reactivateAccount(String accountId) throws Exception;
 
-    void closeAccount(String accountId) throws Exception;
+    Account closeAccount(String accountId) throws Exception;
 
     Account getAccount(String accountId) throws Exception;
 }

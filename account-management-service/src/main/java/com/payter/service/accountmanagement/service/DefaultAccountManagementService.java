@@ -67,12 +67,13 @@ public class DefaultAccountManagementService implements AccountManagementService
     }
 
     @Override
-    public void closeAccount(String accountId) throws Exception {
+    public Account closeAccount(String accountId) throws Exception {
         Lock accountLock = getAccountLock(accountId);
         accountLock.lock();
         try {
             repository.updateStatus(accountId, Status.CLOSED);
             Util.logAudit(httpClientService, "Account closed: " + accountId);
+            return repository.findByAccountId(accountId);
         }
         finally {
             accountLock.unlock();

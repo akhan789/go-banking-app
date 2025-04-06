@@ -12,7 +12,6 @@ import java.math.BigDecimal;
  */
 public class CreateAccountRequestDTO {
 
-    private String accountId;
     private String accountName;
     private BigDecimal balance;
     private String currency;
@@ -20,19 +19,10 @@ public class CreateAccountRequestDTO {
     public CreateAccountRequestDTO() {
     }
 
-    public CreateAccountRequestDTO(String accountId, String accountName, BigDecimal balance, String currency) {
-        this.accountId = accountId;
+    public CreateAccountRequestDTO(String accountName, BigDecimal balance, String currency) {
         this.accountName = accountName;
         this.balance = balance;
         this.currency = currency;
-    }
-
-    public String getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
     }
 
     public String getAccountName() {

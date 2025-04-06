@@ -2,6 +2,7 @@
 package com.payter.service.accountmanagement.repository;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,10 +25,10 @@ import com.payter.service.accountmanagement.entity.Account.Status;
  */
 public class SQLiteAccountManagementRepository implements AccountManagementRepository {
 
-    private final Connection conn;
+    private final String dbUrl;
 
-    public SQLiteAccountManagementRepository(Connection conn) throws SQLException {
-        this.conn = conn;
+    public SQLiteAccountManagementRepository(final String dbUrl) throws SQLException {
+        this.dbUrl = dbUrl;
         createTable();
     }
 
@@ -45,7 +46,7 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
                 "status_history TEXT" +
             ")";
         //@formatter:on
-        try(Statement stmt = conn.createStatement()) {
+        try(Connection conn = DriverManager.getConnection(dbUrl); Statement stmt = conn.createStatement()) {
             stmt.execute(createTableQuery);
         }
         catch(SQLException e) {
@@ -68,7 +69,8 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
             ") " +
             "VALUES (?, ?, ?, ?, ?, ?, ?)";
         //@formatter:on
-        try(PreparedStatement stmt = conn.prepareStatement(saveQuery, Statement.RETURN_GENERATED_KEYS)) {
+        try(Connection conn = DriverManager.getConnection(dbUrl);
+                PreparedStatement stmt = conn.prepareStatement(saveQuery, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, account.getAccountId());
             stmt.setString(2, account.getAccountName());
             if(account.getBalance() != null) {
@@ -128,7 +130,8 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
     @Override
     public Account findByAccountId(String accountId) throws SQLException {
         String findByIdQuery = "SELECT * FROM account_management WHERE account_id = ?";
-        try(PreparedStatement stmt = conn.prepareStatement(findByIdQuery)) {
+        try(Connection conn = DriverManager.getConnection(dbUrl);
+                PreparedStatement stmt = conn.prepareStatement(findByIdQuery)) {
             stmt.setString(1, accountId);
             try(ResultSet rs = stmt.executeQuery()) {
                 if(rs.next()) {
@@ -176,14 +179,15 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
         }
         //@formatter:off
         String updateStatusQuery = 
-            "UPDATE account_management" +
+            "UPDATE account_management " +
             "SET "+
                 "status = ?, " +
                 "status_history = COALESCE(status_history || '|', '') || ? " +
             "WHERE " +
                 "account_id = ?";
         //@formatter:on
-        try(PreparedStatement stmt = conn.prepareStatement(updateStatusQuery)) {
+        try(Connection conn = DriverManager.getConnection(dbUrl);
+                PreparedStatement stmt = conn.prepareStatement(updateStatusQuery)) {
             stmt.setString(1, status.name());
             stmt.setString(2, status.name()); // Append to status_history
             stmt.setString(3, accountId);

@@ -1,8 +1,8 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.service.gateway.service;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.payter.common.auth.Authenticator;
 import com.payter.common.dto.gateway.ErrorResponseDTO;
@@ -55,20 +55,15 @@ public class DefaultGatewayService implements GatewayService {
             ErrorResponseDTO error = new ErrorResponseDTO("Invalid path");
             return parser.serialise(error);
         }
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder().uri(URI.create(targetUrl)).header("X-API-Key",
-                apiKey);
+        Map<String, String> headers = new HashMap<>();
+        headers.put("X-API-Key", apiKey);
         switch(method) {
             case "GET":
-                requestBuilder.GET();
-                return httpClientService.get(targetUrl);
+                return httpClientService.get(headers, targetUrl);
             case "POST":
-                return httpClientService.post(targetUrl, body != null ? body : "");
+                return httpClientService.post(headers, targetUrl, body != null ? body : "");
             case "PUT":
-                requestBuilder.PUT(HttpRequest.BodyPublishers.ofString(body != null ? body : ""));
-                return httpClientService.post(targetUrl, body);
-            case "DELETE":
-                requestBuilder.DELETE();
-                return httpClientService.get(targetUrl);
+                return httpClientService.put(headers, targetUrl, body);
             default:
                 ErrorResponseDTO error = new ErrorResponseDTO("Method not supported");
                 return parser.serialise(error);
@@ -78,7 +73,7 @@ public class DefaultGatewayService implements GatewayService {
     private void logUnauthorizedAttempt(String path, String method, String apiKey) {
         String message = "Unauthorized attempt: " + method + " " + path + " with API key: "
                 + (apiKey != null ? apiKey : "none");
-        httpClientService.postAsync(ConfigUtil.loadProperty("gateway.auditLogging.url", "http://localhost:8004")
+        httpClientService.postAsync(null, ConfigUtil.loadProperty("gateway.auditLogging.url", "http://localhost:8004")
                 + ConfigUtil.loadProperty("gateway.auditLogging.endpoint", "/auditlogging"), message);
     }
 }
