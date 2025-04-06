@@ -155,7 +155,6 @@ public class AccountManagementView extends AbstractView {
                 Account account = accountVM.closeAccount(idField.getText());
                 JOptionPane.showMessageDialog(this, "Account closed: " + account.getAccountId(), "Success",
                         JOptionPane.INFORMATION_MESSAGE);
-                idField.setText("");
             }
             catch(AccountViewModelException e) {
                 showError(e.getMessage());

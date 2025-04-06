@@ -21,4 +21,8 @@ public interface InterestManagementService {
             throws Exception;
 
     InterestManagement getLatestInterestManagement() throws Exception;
+
+    void applyInterest(boolean force);
+
+    void skipTime(int periodsToSkip) throws Exception;
 }

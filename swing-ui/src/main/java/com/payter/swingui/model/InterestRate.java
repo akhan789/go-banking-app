@@ -30,6 +30,6 @@ public class InterestRate {
 
     @Override
     public String toString() {
-        return String.format("%.2f%%", rate * 100);
+        return String.format("%.2f%%", rate);
     }
 }

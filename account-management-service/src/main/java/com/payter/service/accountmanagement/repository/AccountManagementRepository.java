@@ -2,6 +2,8 @@
 package com.payter.service.accountmanagement.repository;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.List;
 
 import com.payter.service.accountmanagement.entity.Account;
 import com.payter.service.accountmanagement.entity.Account.Status;
@@ -18,6 +20,8 @@ public interface AccountManagementRepository {
     Account save(Account account) throws Exception;
 
     Account findByAccountId(String accountId) throws Exception;
+
+    List<Account> findAll() throws SQLException;
 
     void updateStatus(String accountId, Status status) throws Exception;
 

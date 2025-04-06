@@ -8,15 +8,15 @@ package com.payter.swingui.model;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class InterestFrequency {
+public class InterestCalculationFrequency {
 
     private String calculationFrequency;
 
-    public InterestFrequency() {
+    public InterestCalculationFrequency() {
         this.calculationFrequency = "DAILY";
     }
 
-    public InterestFrequency(String calcualationFrequency) {
+    public InterestCalculationFrequency(String calcualationFrequency) {
         this.calculationFrequency = calcualationFrequency != null ? calcualationFrequency : "DAILY";
     }
 

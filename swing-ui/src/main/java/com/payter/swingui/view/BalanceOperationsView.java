@@ -118,7 +118,6 @@ public class BalanceOperationsView extends AbstractView {
                     balanceLabel.setText("$" + new DecimalFormat("0.00").format(balance.getBalance()));
                 }
                 catch(BalanceOperationsViewModelException e) {
-                    showError(e.getMessage());
                     balanceLabel.setText("$0.00");
                 }
             }

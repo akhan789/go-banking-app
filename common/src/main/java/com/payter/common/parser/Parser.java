@@ -2,6 +2,7 @@
 package com.payter.common.parser;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -17,6 +18,8 @@ public interface Parser {
     public <T> T deserialise(String message, Class<T> clazz) throws Exception;
 
     public <T> List<T> deserialiseList(String message, Class<T> elementType) throws Exception;
+
+    public <K, V> Map<K, V> deserialiseMap(String message, Class<K> keyType, Class<V> valueType) throws Exception;
 
     public boolean isList(String entity) throws Exception;
 }

@@ -2,7 +2,7 @@
 package com.payter.swingui.service;
 
 import com.payter.swingui.client.InterestManagementHttpClient;
-import com.payter.swingui.model.InterestFrequency;
+import com.payter.swingui.model.InterestCalculationFrequency;
 import com.payter.swingui.model.InterestRate;
 
 /**
@@ -32,7 +32,7 @@ public class InterestManagementService {
         interestManagementHttpClient.setCalculationFrequency(calculationFrequency);
     }
 
-    public InterestFrequency getCalculationFrequency() {
+    public InterestCalculationFrequency getCalculationFrequency() {
         return interestManagementHttpClient.getCalculationFrequency();
     }
 

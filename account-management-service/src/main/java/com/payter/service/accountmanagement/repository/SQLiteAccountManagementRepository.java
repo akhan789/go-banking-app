@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -167,6 +168,47 @@ public class SQLiteAccountManagementRepository implements AccountManagementRepos
             }
         }
         return null;
+    }
+
+    @Override
+    public List<Account> findAll() throws SQLException {
+        String query = "SELECT * FROM account_management";
+        try(Connection conn = DriverManager.getConnection(dbUrl);
+                PreparedStatement stmt = conn.prepareStatement(query);
+                ResultSet rs = stmt.executeQuery()) {
+            List<Account> accounts = new ArrayList<>();
+            while(rs.next()) {
+                Account account = new Account();
+                account.setId(rs.getLong("id"));
+                account.setAccountId(rs.getString("account_id"));
+                account.setAccountName(rs.getString("account_name"));
+                account.setBalance(rs.getBigDecimal("balance"));
+                try {
+                    account.setCurrency(Currency.valueOf(rs.getString("currency")));
+                }
+                catch(IllegalArgumentException | NullPointerException e) {
+                    throw new SQLException("Invalid currency value in database", e);
+                }
+                try {
+                    account.setStatus(Status.valueOf(rs.getString("status")));
+                }
+                catch(IllegalArgumentException | NullPointerException e) {
+                    throw new SQLException("Invalid status value in database", e);
+                }
+                Timestamp creationTime = rs.getTimestamp("creation_time");
+                if(creationTime != null) {
+                    account.setCreationTime(creationTime.toLocalDateTime());
+                }
+                String statusHistoryString = rs.getString("status_history");
+                if(statusHistoryString != null && !statusHistoryString.trim().isEmpty()) {
+                    List<String> statusHistory = Arrays.asList(statusHistoryString.split("\\|"));
+                    account.setStatusHistory(statusHistory);
+                }
+
+                accounts.add(account);
+            }
+            return accounts;
+        }
     }
 
     @Override

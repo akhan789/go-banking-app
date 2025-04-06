@@ -17,6 +17,8 @@ public class InterestManagement {
     private BigDecimal dailyRate;
     private CalculationFrequency calculationFrequency;
     private LocalDateTime createdAt;
+    private LocalDateTime lastAppliedAt;
+    private LocalDateTime nextApplicationAt;
 
     public enum CalculationFrequency {
         DAILY, WEEKLY, MONTHLY
@@ -55,5 +57,21 @@ public class InterestManagement {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastAppliedAt() {
+        return lastAppliedAt;
+    }
+
+    public void setNextApplicationAt(LocalDateTime nextApplicationAt) {
+        this.nextApplicationAt = nextApplicationAt;
+    }
+
+    public LocalDateTime getNextApplicationAt() {
+        return nextApplicationAt;
+    }
+
+    public void setLastAppliedAt(LocalDateTime lastAppliedAt) {
+        this.lastAppliedAt = lastAppliedAt;
     }
 }

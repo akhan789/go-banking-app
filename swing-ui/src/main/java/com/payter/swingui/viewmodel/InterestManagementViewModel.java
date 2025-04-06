@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.swingui.viewmodel;
 
-import com.payter.swingui.model.InterestFrequency;
+import com.payter.swingui.model.InterestCalculationFrequency;
 import com.payter.swingui.model.InterestRate;
 import com.payter.swingui.service.InterestManagementService;
 
@@ -41,10 +41,10 @@ public class InterestManagementViewModel {
         System.out.println("Calculation frequency set to: " + frequency);
     }
 
-    public InterestFrequency getCalculationFrequency() throws InterestManagementViewModelException {
-        InterestFrequency frequency = interestManagementService.getCalculationFrequency();
-        if(frequency != null) {
-            return frequency;
+    public InterestCalculationFrequency getCalculationFrequency() throws InterestManagementViewModelException {
+        InterestCalculationFrequency calculationFrequency = interestManagementService.getCalculationFrequency();
+        if(calculationFrequency != null) {
+            return calculationFrequency;
         }
         else {
             throw new InterestManagementViewModelException("Failed to retrieve calculation frequency.");

@@ -29,7 +29,12 @@ public class GatewayController {
 
     public void handle(HttpExchange exchange) {
         try {
-            String path = exchange.getRequestURI().getPath();
+            String fullPath = exchange.getRequestURI().getRawPath();
+            String query = exchange.getRequestURI().getRawQuery();
+            if(query != null) {
+                fullPath += "?" + query;
+            }
+
             String method = exchange.getRequestMethod();
             String body = null;
             if("POST".equals(method) || "PUT".equals(method)) {
@@ -37,8 +42,9 @@ public class GatewayController {
                     body = new String(inputStream.readAllBytes());
                 }
             }
+
             String apiKey = exchange.getRequestHeaders().getFirst("X-API-Key");
-            String response = service.forwardRequest(path, method, body, apiKey);
+            String response = service.forwardRequest(fullPath, method, body, apiKey);
             HttpClientService.sendResponse(exchange, getStatusCode(method, response), response);
         }
         catch(Exception e) {

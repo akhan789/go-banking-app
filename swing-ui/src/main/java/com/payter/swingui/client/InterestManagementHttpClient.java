@@ -1,8 +1,12 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.swingui.client;
 
+import java.math.BigDecimal;
+
+import com.payter.common.dto.interestmanagement.InterestManagementDTO;
+import com.payter.common.dto.interestmanagement.InterestManagementRequestDTO;
 import com.payter.common.util.ConfigUtil;
-import com.payter.swingui.model.InterestFrequency;
+import com.payter.swingui.model.InterestCalculationFrequency;
 import com.payter.swingui.model.InterestRate;
 
 /**
@@ -22,7 +26,8 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public void setInterestRate(double rate) {
         try {
-            sendPostRequest(ENDPOINT + "/rate", rate, Void.class);
+            InterestManagementRequestDTO request = new InterestManagementRequestDTO(BigDecimal.valueOf(rate), null);
+            sendPostRequest(ENDPOINT + "/rate", request, Void.class);
         }
         catch(Exception e) {
             System.err.println("Failed to set interest rate: " + e.getMessage());
@@ -31,8 +36,10 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
 
     public InterestRate getGlobalDailyRate() {
         try {
-            Double rate = sendGetRequest(ENDPOINT + "/rate", Double.class);
-            return new InterestRate(rate != null ? rate : 0.0);
+            InterestManagementDTO response = sendGetRequest(ENDPOINT + "/rate", InterestManagementDTO.class);
+            return response != null && response.getDailyRate() != null
+                    ? new InterestRate(response.getDailyRate().doubleValue())
+                    : new InterestRate(0.0);
         }
         catch(Exception e) {
             System.err.println("Failed to get interest rate: " + e.getMessage());
@@ -40,29 +47,33 @@ public class InterestManagementHttpClient extends AbstractHttpClient {
         }
     }
 
-    public void setCalculationFrequency(String frequency) {
+    public void setCalculationFrequency(String calculationFrequency) {
         try {
-            sendPostRequest(ENDPOINT + "/frequency", frequency, Void.class);
+            InterestManagementRequestDTO request = new InterestManagementRequestDTO(null, calculationFrequency);
+            sendPostRequest(ENDPOINT + "/calculationfrequency", request, Void.class);
         }
         catch(Exception e) {
             System.err.println("Failed to set calculation frequency: " + e.getMessage());
         }
     }
 
-    public InterestFrequency getCalculationFrequency() {
+    public InterestCalculationFrequency getCalculationFrequency() {
         try {
-            String frequency = sendGetRequest(ENDPOINT + "/frequency", String.class);
-            return new InterestFrequency(frequency);
+            InterestManagementDTO response = sendGetRequest(ENDPOINT + "/calculationfrequency",
+                    InterestManagementDTO.class);
+            return response != null && response.getCalculationFrequency() != null
+                    ? new InterestCalculationFrequency(response.getCalculationFrequency())
+                    : new InterestCalculationFrequency("MONTHLY"); // Default to MONTHLY if null
         }
         catch(Exception e) {
             System.err.println("Failed to get calculation frequency: " + e.getMessage());
-            return new InterestFrequency();
+            return new InterestCalculationFrequency("MONTHLY");
         }
     }
 
     public void applyInterest(boolean force) {
         try {
-            sendPostRequest(ENDPOINT + "/apply", force, Void.class);
+            sendPostRequest(ENDPOINT + "/apply?force=" + force, null, Void.class);
         }
         catch(Exception e) {
             System.err.println("Failed to apply interest: " + e.getMessage());

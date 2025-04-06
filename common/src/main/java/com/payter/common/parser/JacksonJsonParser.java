@@ -2,6 +2,7 @@
 package com.payter.common.parser;
 
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
@@ -41,6 +42,12 @@ class JacksonJsonParser implements Parser {
     @Override
     public <T> List<T> deserialiseList(String message, Class<T> elementType) throws Exception {
         JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, elementType);
+        return objectMapper.readValue(message, type);
+    }
+
+    @Override
+    public <K, V> Map<K, V> deserialiseMap(String message, Class<K> keyType, Class<V> valueType) throws Exception {
+        JavaType type = objectMapper.getTypeFactory().constructMapType(Map.class, keyType, valueType);
         return objectMapper.readValue(message, type);
     }
 

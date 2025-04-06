@@ -2,6 +2,7 @@
 package com.payter.service.accountmanagement.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.payter.service.accountmanagement.entity.Account;
 
@@ -14,8 +15,6 @@ import com.payter.service.accountmanagement.entity.Account;
  */
 public interface AccountManagementService {
 
-    Account getAccount(String accountId) throws Exception;
-
     Account createAccount(Account account) throws Exception;
 
     Account suspendAccount(String accountId) throws Exception;
@@ -23,6 +22,10 @@ public interface AccountManagementService {
     Account reactivateAccount(String accountId) throws Exception;
 
     Account closeAccount(String accountId) throws Exception;
+
+    Account getAccount(String accountId) throws Exception;
+
+    List<Account> getAllAccounts() throws Exception;
 
     Account creditAccount(String accountId, BigDecimal amount) throws Exception;
 

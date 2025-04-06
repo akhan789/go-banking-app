@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -94,12 +95,31 @@ public class AccountManagementController {
     }
 
     private void handleGet(HttpExchange exchange, String[] pathSegments) throws Exception {
-        String accountId = parseAccountId(pathSegments);
-        Account account = service.getAccount(accountId);
-        AccountDTO response = new AccountDTO(account.getId(), account.getAccountId(), account.getAccountName(),
-                account.getBalance(), account.getStatus().name(), account.getCurrency().name(),
-                account.getCreationTime(), account.getStatusHistory());
-        HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
+        if(pathSegments != null && pathSegments.length > 2) {
+            String accountId = parseAccountId(pathSegments);
+            Account account = service.getAccount(accountId);
+            AccountDTO response = new AccountDTO(account.getId(), account.getAccountId(), account.getAccountName(),
+                    account.getBalance(), account.getStatus().name(), account.getCurrency().name(),
+                    account.getCreationTime(), account.getStatusHistory());
+            HttpClientService.sendResponse(exchange, 200, parser.serialise(response));
+        }
+        else {
+            List<Account> accounts = service.getAllAccounts();
+            //@formatter:off
+            List<AccountDTO> responseList = accounts.stream()
+                .map(account -> new AccountDTO(
+                    account.getId(),
+                    account.getAccountId(),
+                    account.getAccountName(),
+                    account.getBalance(),
+                    account.getStatus().name(),
+                    account.getCurrency().name(),
+                    account.getCreationTime(),
+                    account.getStatusHistory()))
+                .toList();
+            //@formatter:on
+            HttpClientService.sendResponse(exchange, 200, parser.serialise(responseList));
+        }
     }
 
     private void handlePut(HttpExchange exchange, String path, String[] pathSegments) throws Exception {
@@ -129,7 +149,7 @@ public class AccountManagementController {
         else if(path.endsWith("/credit") || path.endsWith("/debit")) {
             try(InputStream is = exchange.getRequestBody()) {
                 String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                Map<String, String> request = parser.deserialise(body, Map.class);
+                Map<String, String> request = parser.deserialiseMap(body, String.class, String.class);
                 BigDecimal amount = new BigDecimal(request.get("amount"));
                 Account updated = path.endsWith("/credit") ? service.creditAccount(accountId, amount)
                         : service.debitAccount(accountId, amount);

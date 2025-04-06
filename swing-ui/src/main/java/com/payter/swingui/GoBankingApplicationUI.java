@@ -45,11 +45,9 @@ public class GoBankingApplicationUI extends JFrame {
         pack();
     }
 
-    // Create a simple menu bar with File, Exit, and Help options
     private void createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
-        // File menu with Exit option
         JMenu fileMenu = new JMenu("File");
         JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(e -> {
@@ -58,7 +56,6 @@ public class GoBankingApplicationUI extends JFrame {
         });
         fileMenu.add(exitItem);
 
-        // Help menu with About option
         JMenu helpMenu = new JMenu("Help");
         JMenuItem aboutItem = new JMenuItem("About");
         aboutItem.addActionListener(e -> showAboutDialog());
@@ -69,7 +66,6 @@ public class GoBankingApplicationUI extends JFrame {
         setJMenuBar(menuBar);
     }
 
-    // Create UI with tabs for each functionality
     private void createUI() {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Account Management", new AccountManagementView(new AccountManagementViewModel()));
@@ -87,13 +83,11 @@ public class GoBankingApplicationUI extends JFrame {
         });
     }
 
-    // Method to show the About dialog
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(this, "Go Banking App\nVersion 0.0.1-SNAPSHOT\n\nDeveloped by Abid Khan.",
                 "About", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Cleanup resources before closing
     private void cleanup() {
         if(auditLoggingView != null) {
             auditLoggingView.cleanup();

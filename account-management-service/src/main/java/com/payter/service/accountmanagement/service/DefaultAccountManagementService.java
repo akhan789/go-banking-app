@@ -2,6 +2,7 @@
 package com.payter.service.accountmanagement.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -88,6 +89,11 @@ public class DefaultAccountManagementService implements AccountManagementService
             throw new RuntimeException("Account not found with ID: " + accountId);
         }
         return account;
+    }
+
+    @Override
+    public List<Account> getAllAccounts() throws Exception {
+        return repository.findAll();
     }
 
     @Override
