@@ -1,6 +1,8 @@
 // Copyright (c) 2025, Payter and/or its affiliates. All rights reserved.
 package com.payter.service.auditlogging.repository;
 
+import java.util.List;
+
 import com.payter.service.auditlogging.entity.AuditLogging;
 
 /**
@@ -12,5 +14,7 @@ import com.payter.service.auditlogging.entity.AuditLogging;
  */
 public interface AuditLoggingRepository {
 
-    void save(AuditLogging log) throws Exception;
+    void writeLogEntry(AuditLogging log) throws Exception;
+
+    List<AuditLogging> getLogs(long afterId) throws Exception;
 }

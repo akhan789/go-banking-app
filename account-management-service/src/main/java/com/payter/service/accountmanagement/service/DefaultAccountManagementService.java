@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.payter.common.dto.auditlogging.AuditLoggingRequestDTO.EventType;
 import com.payter.common.http.HttpClientService;
 import com.payter.common.util.Util;
 import com.payter.service.accountmanagement.entity.Account;
@@ -36,7 +37,7 @@ public class DefaultAccountManagementService implements AccountManagementService
     @Override
     public Account createAccount(Account account) throws Exception {
         Account saved = repository.save(account);
-        Util.logAudit(httpClientService, "Account created: " + saved.getId());
+        Util.logAudit(httpClientService, EventType.CREATE, "Created account: " + saved.getAccountId());
         return saved;
     }
 
@@ -46,7 +47,8 @@ public class DefaultAccountManagementService implements AccountManagementService
         accountLock.lock();
         try {
             repository.updateStatus(accountId, Status.SUSPENDED);
-            Util.logAudit(httpClientService, "Account suspended: " + accountId);
+            Util.logAudit(httpClientService, EventType.UPDATE,
+                    "Account id: " + accountId + " status has been updated to " + Status.SUSPENDED);
             return repository.findByAccountId(accountId);
         }
         finally {
@@ -60,7 +62,8 @@ public class DefaultAccountManagementService implements AccountManagementService
         accountLock.lock();
         try {
             repository.updateStatus(accountId, Status.ACTIVE);
-            Util.logAudit(httpClientService, "Account reactivated: " + accountId);
+            Util.logAudit(httpClientService, EventType.UPDATE,
+                    "Account id: " + accountId + " status has been updated to " + Status.ACTIVE);
             return repository.findByAccountId(accountId);
         }
         finally {
@@ -74,7 +77,8 @@ public class DefaultAccountManagementService implements AccountManagementService
         accountLock.lock();
         try {
             repository.updateStatus(accountId, Status.CLOSED);
-            Util.logAudit(httpClientService, "Account closed: " + accountId);
+            Util.logAudit(httpClientService, EventType.UPDATE,
+                    "Account id: " + accountId + " status has been updated to " + Status.CLOSED);
             return repository.findByAccountId(accountId);
         }
         finally {
@@ -107,7 +111,8 @@ public class DefaultAccountManagementService implements AccountManagementService
             }
             BigDecimal newBalance = account.getBalance().add(amount);
             repository.updateBalance(accountId, newBalance);
-            Util.logAudit(httpClientService, "Account credited: " + accountId + " with amount: " + amount);
+            Util.logAudit(httpClientService, EventType.UPDATE,
+                    "Credit funds to account id: " + accountId + ", amount: " + amount);
             return repository.findByAccountId(accountId);
         }
         finally {
@@ -129,7 +134,8 @@ public class DefaultAccountManagementService implements AccountManagementService
                 throw new IllegalStateException("Insufficient funds in account: " + accountId);
             }
             repository.updateBalance(accountId, newBalance);
-            Util.logAudit(httpClientService, "Account debited: " + accountId + " with amount: " + amount);
+            Util.logAudit(httpClientService, EventType.UPDATE,
+                    "Debited funds from account id: " + accountId + ", amount: " + amount);
             return repository.findByAccountId(accountId);
         }
         finally {

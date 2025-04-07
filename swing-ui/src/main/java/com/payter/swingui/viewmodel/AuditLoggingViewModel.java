@@ -37,7 +37,7 @@ public class AuditLoggingViewModel {
             StringBuilder logText = new StringBuilder();
             for(AuditLoggingEntry log : logs) {
                 logText.append(log.toString()).append("\n");
-                if(log.getId() != null && log.getId() > lastLogId) {
+                if(log.getId() > lastLogId) {
                     lastLogId = log.getId();
                 }
             }

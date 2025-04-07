@@ -77,9 +77,16 @@ public class HttpClientService {
 
     public static void sendResponse(HttpExchange exchange, int status, String response) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(status, response.getBytes(StandardCharsets.UTF_8).length);
+        if(status == 204) {
+            // No content is allowed in response body
+            exchange.sendResponseHeaders(status, -1);
+            return;
+        }
+        byte[] bytes = (response != null) ? response.getBytes(StandardCharsets.UTF_8) : new byte[0];
+        exchange.sendResponseHeaders(status, bytes.length);
         try(OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes(StandardCharsets.UTF_8));
+            os.write(bytes);
         }
     }
+
 }

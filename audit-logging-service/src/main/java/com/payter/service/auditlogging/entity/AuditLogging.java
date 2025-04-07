@@ -12,15 +12,34 @@ import java.time.LocalDateTime;
  */
 public class AuditLogging {
 
-    private Long id;
-    private String message;
+    private long id;
+    private EventType eventType;
+    private String details;
     private LocalDateTime timestamp;
+
+    public enum EventType {
+        INFO, WARNING, ERROR, CREATE, READ, UPDATE, DELETE
+    }
 
     public AuditLogging() {
         this.timestamp = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public AuditLogging(EventType eventType, String details, LocalDateTime timestamp) {
+        this.id = -1;
+        this.eventType = eventType;
+        this.details = details;
+        this.timestamp = timestamp;
+    }
+
+    public AuditLogging(long id, EventType eventType, String details, LocalDateTime timestamp) {
+        this.id = id;
+        this.eventType = eventType;
+        this.details = details;
+        this.timestamp = timestamp;
+    }
+
+    public long getId() {
         return id;
     }
 
@@ -28,12 +47,20 @@ public class AuditLogging {
         this.id = id;
     }
 
-    public String getMessage() {
-        return message;
+    public EventType getEventType() {
+        return eventType;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setEventType(EventType eventType) {
+        this.eventType = eventType;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
     }
 
     public LocalDateTime getTimestamp() {
@@ -42,5 +69,10 @@ public class AuditLogging {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("[%d] [%s] %s: %s", id, timestamp, eventType, details);
     }
 }

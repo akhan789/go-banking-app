@@ -3,6 +3,8 @@ package com.payter.swingui.model;
 
 import java.time.LocalDateTime;
 
+import com.payter.common.dto.auditlogging.AuditLoggingRequestDTO;
+
 /**
  * 
  * 
@@ -10,47 +12,18 @@ import java.time.LocalDateTime;
  * @since 0.0.1_SNAPSHOT
  * @version $Revision$
  */
-public class AuditLoggingEntry {
-
-    private Long id;
-    private String message;
-    private LocalDateTime timestamp;
+public class AuditLoggingEntry extends AuditLoggingRequestDTO {
 
     public AuditLoggingEntry() {
     }
 
-    public AuditLoggingEntry(Long id, String message, LocalDateTime timestamp) {
-        this.id = id;
-        this.message = message;
-        this.timestamp = timestamp;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
+    public AuditLoggingEntry(long id, EventType eventType, String details, LocalDateTime timestamp) {
+        super(id, eventType, details, timestamp);
     }
 
     @Override
     public String toString() {
-        return "[" + (timestamp != null ? timestamp.toString() : "N/A") + "] " + message;
+        return "[" + (getTimestamp() != null ? getTimestamp().toString() : "N/A") + ": " + getEventType().name() + "] "
+                + getDetails();
     }
 }

@@ -34,13 +34,10 @@ public class AuditLoggingView extends AbstractView {
     public AuditLoggingView(AuditLoggingViewModel auditLogVM) {
         this.auditLoggingVM = auditLogVM;
         setLayout(new BorderLayout());
-
         logArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(logArea);
         this.auditLoggingVM.setAuditLogArea(logArea);
-
         add(scrollPane, BorderLayout.CENTER);
-
         startPolling();
     }
 

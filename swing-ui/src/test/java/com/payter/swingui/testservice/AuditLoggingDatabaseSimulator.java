@@ -69,7 +69,8 @@ public class AuditLoggingDatabaseSimulator {
                 requestBody = reader.lines().collect(Collectors.joining());
             }
             AuditLoggingEntry entry = OBJECT_MAPPER.readValue(requestBody, AuditLoggingEntry.class);
-            AuditLoggingEntry entryWithId = new AuditLoggingEntry(nextId++, entry.getMessage(), entry.getTimestamp());
+            AuditLoggingEntry entryWithId = new AuditLoggingEntry(nextId++, entry.getEventType(), entry.getDetails(),
+                    entry.getTimestamp());
             synchronized(AUDIT_LOGS) {
                 AUDIT_LOGS.add(entryWithId);
             }

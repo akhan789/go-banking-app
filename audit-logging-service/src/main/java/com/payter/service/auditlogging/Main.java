@@ -2,8 +2,6 @@
 package com.payter.service.auditlogging;
 
 import java.net.InetSocketAddress;
-import java.sql.Connection;
-import java.sql.DriverManager;
 
 import com.payter.common.auth.SimpleAuthenticator;
 import com.payter.common.util.ConfigUtil;
@@ -26,16 +24,14 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Util.createDbDirectoryIfNotExists();
-        try(Connection conn = DriverManager.getConnection(
-                ConfigUtil.loadProperty("auditlogging.db.connection.url", "jdbc:sqlite:db/auditlogging.db"))) {
-            AuditLoggingRepository repository = new SQLiteAuditLoggingRepository(conn);
-            AuditLoggingService service = new DefaultAuditLoggingService(repository);
-            AuditLoggingController controller = new AuditLoggingController(new SimpleAuthenticator(), service);
-            int port = Integer.valueOf(ConfigUtil.loadProperty("auditlogging.port", "8004"));
-            HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-            server.createContext(ConfigUtil.loadProperty("auditlogging.endpoint", "/auditlogging"), controller::handle);
-            server.start();
-            System.out.println("Audit Logging Service running on port " + port + "...");
-        }
+        String dbUrl = ConfigUtil.loadProperty("auditlogging.db.connection.url", "jdbc:sqlite:db/auditlogging.db");
+        AuditLoggingRepository repository = new SQLiteAuditLoggingRepository(dbUrl);
+        AuditLoggingService service = new DefaultAuditLoggingService(repository);
+        AuditLoggingController controller = new AuditLoggingController(new SimpleAuthenticator(), service);
+        int port = Integer.valueOf(ConfigUtil.loadProperty("auditlogging.port", "8004"));
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        server.createContext(ConfigUtil.loadProperty("auditlogging.endpoint", "/auditlogging"), controller::handle);
+        server.start();
+        System.out.println("Audit Logging Service running on port " + port + "...");
     }
 }

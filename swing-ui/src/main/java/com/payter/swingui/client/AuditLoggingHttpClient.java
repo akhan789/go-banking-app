@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.payter.common.dto.auditlogging.AuditLoggingDTO;
+import com.payter.common.dto.auditlogging.AuditLoggingRequestDTO;
 import com.payter.common.util.ConfigUtil;
 import com.payter.swingui.model.AuditLoggingEntry;
 
@@ -30,8 +30,9 @@ public class AuditLoggingHttpClient extends AbstractHttpClient {
     public List<AuditLoggingEntry> getAuditLogsAfter(long lastLogId) {
         try {
             String endpoint = ENDPOINT + "/logs?after=" + lastLogId;
-            List<AuditLoggingDTO> dtos = sendGetRequest(endpoint, new TypeReference<List<AuditLoggingDTO>>() {
-            });
+            List<AuditLoggingRequestDTO> dtos = sendGetRequest(endpoint,
+                    new TypeReference<List<AuditLoggingRequestDTO>>() {
+                    });
             lastRequestFailed = false; // Reset on success
             return dtos != null ? dtos.stream().map(this::mapToAuditLoggingEntry).collect(Collectors.toList())
                     : Collections.emptyList();
@@ -41,7 +42,7 @@ public class AuditLoggingHttpClient extends AbstractHttpClient {
                 System.err.println("Failed to get audit logs: Service offline or unreachable - " + e.getMessage());
                 lastRequestFailed = true;
             }
-            return null; // Indicate connectivity failure
+            return null;
         }
         catch(Exception e) {
             // Check if it's an HTTP error (e.g., 500)
@@ -59,9 +60,10 @@ public class AuditLoggingHttpClient extends AbstractHttpClient {
         }
     }
 
-    private AuditLoggingEntry mapToAuditLoggingEntry(AuditLoggingDTO dto) {
-        if(dto == null)
+    private AuditLoggingEntry mapToAuditLoggingEntry(AuditLoggingRequestDTO dto) {
+        if(dto == null) {
             return null;
-        return new AuditLoggingEntry(dto.getId(), dto.getMessage(), dto.getTimestamp());
+        }
+        return new AuditLoggingEntry(dto.getId(), dto.getEventType(), dto.getDetails(), dto.getTimestamp());
     }
 }

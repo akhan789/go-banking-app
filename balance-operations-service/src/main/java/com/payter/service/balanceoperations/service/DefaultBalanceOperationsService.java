@@ -9,6 +9,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.payter.common.dto.accountmanagement.AccountDTO;
+import com.payter.common.dto.auditlogging.AuditLoggingRequestDTO.EventType;
+import com.payter.common.dto.balanceoperations.AmountDTO;
 import com.payter.common.http.HttpClientService;
 import com.payter.common.parser.ParserFactory;
 import com.payter.common.parser.ParserFactory.ParserType;
@@ -60,7 +62,8 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
             balanceOperation.setType(Type.CREDIT);
             BalanceOperation saved = repository.save(balanceOperation);
             updateAccountBalance(balanceOperation.getAccountId(), balanceOperation.getAmount(), true);
-            Util.logAudit(httpClientService, "Credit transaction: " + saved.getId());
+            Util.logAudit(httpClientService, EventType.CREATE, "Balance Operation CREDIT saved, details: Account ID: "
+                    + saved.getAccountId() + ", amount: " + saved.getAmount());
             return saved;
         }
         finally {
@@ -81,7 +84,8 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
             balanceOperation.setType(Type.DEBIT);
             BalanceOperation saved = repository.save(balanceOperation);
             updateAccountBalance(balanceOperation.getAccountId(), balanceOperation.getAmount(), false);
-            Util.logAudit(httpClientService, "Debit transaction: " + saved.getId());
+            Util.logAudit(httpClientService, EventType.CREATE, "Balance Operation DEBIT saved, details: Account ID: "
+                    + saved.getAccountId() + ", amount: " + saved.getAmount());
             return saved;
         }
         finally {
@@ -122,8 +126,9 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
                 repository.saveTransfer(debitBalanceOperation, creditBalanceOperation);
                 updateAccountBalance(fromAccountId, amount, false);
                 updateAccountBalance(toAccountId, amount, true);
-                Util.logAudit(httpClientService,
-                        "Transfer from " + fromAccountId + " to " + toAccountId + ": " + amount);
+                Util.logAudit(httpClientService, EventType.UPDATE,
+                        "Balance Operation TRANSFER saved, Transferred funds from account id: " + fromAccountId
+                                + " to account id: " + toAccountId + ", amount: " + amount);
                 return debitBalanceOperation;
             }
             finally {
@@ -150,8 +155,7 @@ public class DefaultBalanceOperationsService implements BalanceOperationsService
         headers.put("X-API-Key", INTERNAL_API_KEY);
         String operation = isCredit ? "credit" : "debit";
         String url = ACCOUNT_SERVICE_URL + "/" + accountId + "/" + operation;
-        String body = "{\"amount\": \"" + amount.toString() + "\"}";
-        httpClientService.put(headers, url, body);
+        httpClientService.put(headers, url, ParserFactory.getParser(ParserType.JSON).serialise(new AmountDTO(amount)));
     }
 
     private Lock getAccountLock(String accountId) {

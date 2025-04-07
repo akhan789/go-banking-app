@@ -8,7 +8,12 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.payter.common.dto.auditlogging.AuditLoggingRequestDTO;
+import com.payter.common.dto.auditlogging.AuditLoggingRequestDTO.EventType;
 import com.payter.common.http.HttpClientService;
+import com.payter.common.parser.Parser;
+import com.payter.common.parser.ParserFactory;
+import com.payter.common.parser.ParserFactory.ParserType;
 
 /**
  * 
@@ -32,15 +37,17 @@ public final class Util {
         }
     }
 
-    public static void logAudit(final HttpClientService httpClientService, final String message) {
+    public static void logAudit(final HttpClientService httpClientService, final EventType eventType,
+            final String details) {
         int retries = 3;
         while(retries > 0) {
             try {
+                Parser parser = ParserFactory.getParser(ParserType.JSON);
                 Map<String, String> headers = new HashMap<>();
                 headers.put("X-API-Key", "internal");
                 httpClientService.postAsync(headers,
                         ConfigUtil.loadProperty("util.auditlogging.endpoint", "http://localhost:8004/auditlogging"),
-                        message);
+                        parser.serialise(new AuditLoggingRequestDTO(eventType, details)));
                 return;
             }
             catch(Exception e) {

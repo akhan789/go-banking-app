@@ -6,12 +6,12 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import com.payter.common.auth.Authenticator;
 import com.payter.common.dto.accountmanagement.AccountDTO;
 import com.payter.common.dto.accountmanagement.CreateAccountRequestDTO;
+import com.payter.common.dto.balanceoperations.AmountDTO;
 import com.payter.common.dto.gateway.ErrorResponseDTO;
 import com.payter.common.http.HttpClientService;
 import com.payter.common.parser.Parser;
@@ -124,7 +124,6 @@ public class AccountManagementController {
 
     private void handlePut(HttpExchange exchange, String path, String[] pathSegments) throws Exception {
         String accountId = parseAccountId(pathSegments);
-
         if(path.endsWith(ConfigUtil.loadProperty("accountManagement.suspend.endpoint", "/suspend"))) {
             Account updated = service.suspendAccount(accountId);
             AccountDTO response = new AccountDTO(updated.getId(), updated.getAccountId(), updated.getAccountName(),
@@ -149,8 +148,8 @@ public class AccountManagementController {
         else if(path.endsWith("/credit") || path.endsWith("/debit")) {
             try(InputStream is = exchange.getRequestBody()) {
                 String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                Map<String, String> request = parser.deserialiseMap(body, String.class, String.class);
-                BigDecimal amount = new BigDecimal(request.get("amount"));
+                AmountDTO amountDTO = parser.deserialise(body, AmountDTO.class);
+                BigDecimal amount = amountDTO.getAmount();
                 Account updated = path.endsWith("/credit") ? service.creditAccount(accountId, amount)
                         : service.debitAccount(accountId, amount);
                 AccountDTO response = new AccountDTO(updated.getId(), updated.getAccountId(), updated.getAccountName(),

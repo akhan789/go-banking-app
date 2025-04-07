@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.payter.common.dto.auditlogging.AuditLoggingRequestDTO.EventType;
 import com.payter.common.http.HttpClientService;
 import com.payter.common.parser.Parser;
 import com.payter.common.parser.ParserFactory;
@@ -78,7 +79,7 @@ public class DefaultInterestManagementService implements InterestManagementServi
             newScheduler.scheduleAtFixedRate(this::applyScheduledInterest, 0, currentPeriod, TimeUnit.HOURS);
             this.scheduler = newScheduler;
         }
-        Util.logAudit(httpClientService,
+        Util.logAudit(httpClientService, EventType.UPDATE,
                 "Interest management updated: " + (dailyRate != null ? "dailyRate=" + dailyRate : "")
                         + (dailyRate != null && calculationFrequency != null ? ", " : "")
                         + (calculationFrequency != null ? "calculationFrequency=" + calculationFrequency : ""));
@@ -103,7 +104,7 @@ public class DefaultInterestManagementService implements InterestManagementServi
         }
         catch(Exception e) {
             e.printStackTrace();
-            Util.logAudit(httpClientService, "Failed to apply interest: " + e.getMessage());
+            Util.logAudit(httpClientService, EventType.ERROR, "Failed to apply interest: " + e.getMessage());
         }
     }
 
@@ -128,7 +129,7 @@ public class DefaultInterestManagementService implements InterestManagementServi
         }
         catch(Exception e) {
             e.printStackTrace();
-            Util.logAudit(httpClientService, "Failed to apply interest: " + e.getMessage());
+            Util.logAudit(httpClientService, EventType.ERROR, "Failed to apply interest: " + e.getMessage());
         }
     }
 
@@ -171,7 +172,8 @@ public class DefaultInterestManagementService implements InterestManagementServi
                                     + ConfigUtil.loadProperty("service.balanceoperations.credit.endpoint", "/credit"),
                             message);
                 }
-                Util.logAudit(httpClientService, "Credited " + interest + " to Account " + account.getAccountId());
+                Util.logAudit(httpClientService, EventType.UPDATE,
+                        "Credited " + interest + " to Account " + account.getAccountId());
             }
         }
     }
