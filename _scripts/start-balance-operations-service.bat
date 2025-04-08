@@ -1,0 +1,3 @@
+@echo off
+echo Starting Balance Operations Service...
+..\_jre\bin\java -cp ".;./config/;./libs/ext/*;./libs/*" com.payter.service.balanceoperations.Main

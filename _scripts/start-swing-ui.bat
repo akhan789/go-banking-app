@@ -1,0 +1,3 @@
+@echo off
+echo Starting Swing UI...
+..\_jre\bin\java -cp ".;./config/;./libs/ext/*;./libs/*" com.payter.swingui.Main
