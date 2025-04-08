@@ -1,0 +1,3 @@
+@echo off
+echo Starting Interest Management Service...
+..\_jre\bin\java -cp ".;./config/;./libs/ext/*;./libs/*" com.payter.service.interestmanagement.Main

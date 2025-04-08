@@ -1,0 +1,3 @@
+@echo off
+echo Starting Account Management Service...
+..\_jre\bin\java -cp ".;./config/;./libs/ext/*;./libs/*" com.payter.service.accountmanagement.Main

@@ -1,0 +1,3 @@
+@echo off
+echo Starting Service Gateway...
+..\_jre\bin\java -cp ".;./config/;./libs/ext/*;./libs/*" com.payter.service.gateway.Main

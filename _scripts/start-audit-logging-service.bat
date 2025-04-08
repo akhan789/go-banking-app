@@ -1,0 +1,3 @@
+@echo off
+echo Starting Audit Logging Service...
+..\_jre\bin\java -cp ".;./config/;./libs/ext/*;./libs/*" com.payter.service.auditlogging.Main
