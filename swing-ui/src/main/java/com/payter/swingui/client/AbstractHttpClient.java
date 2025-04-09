@@ -6,6 +6,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -22,6 +25,7 @@ import com.payter.common.util.ConfigUtil;
  */
 public abstract class AbstractHttpClient {
 
+    private static final Logger LOG = LogManager.getLogger(AbstractHttpClient.class);
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final ObjectMapper OBJECT_MAPPER;
 
@@ -44,6 +48,7 @@ public abstract class AbstractHttpClient {
             .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
+        LOG.info("Sending request (no body): headers: " + request.headers() + ": " + request);
         return handleResponse(request, responseType);
     }
 
@@ -56,6 +61,7 @@ public abstract class AbstractHttpClient {
             .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
+        LOG.info("Sending request (no body): headers: " + request.headers() + ": " + request);
         return handleResponse(request, typeReference);
     }
 
@@ -69,6 +75,8 @@ public abstract class AbstractHttpClient {
             .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
+        LOG.info("Sending request: headers: " + request.headers() + ": " + request + ": "
+                + (jsonBody != null && !jsonBody.isEmpty() ? jsonBody : "<no body>"));
         return handleResponse(request, responseType);
     }
 
@@ -82,12 +90,20 @@ public abstract class AbstractHttpClient {
             .header("X-API-Key", ConfigUtil.loadProperty("service.gateway.apiKey", "default_api_key"))
             .build();
         //@formatter:on
+        LOG.info("Sending request: " + request.headers() + ": " + request + ": "
+                + (jsonBody != null && !jsonBody.isEmpty() ? jsonBody : "<no body>"));
         return handleResponse(request, responseType);
     }
 
     private <T> T handleResponse(HttpRequest request, Class<T> responseType) throws Exception {
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         int statusCode = response.statusCode();
+        if(response.body() != null && !response.body().isEmpty()) {
+            LOG.info("Received response: " + response.body());
+        }
+        else {
+            LOG.info("Received response no body");
+        }
         if(statusCode >= 200 && statusCode < 300) {
             if(responseType == Void.class || response.body() == null || response.body().isEmpty()) {
                 return null;
@@ -103,6 +119,12 @@ public abstract class AbstractHttpClient {
     private <T> T handleResponse(HttpRequest request, TypeReference<T> typeReference) throws Exception {
         HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         int statusCode = response.statusCode();
+        if(response.body() != null && !response.body().isEmpty()) {
+            LOG.info("Received response: " + response.body());
+        }
+        else {
+            LOG.info("Received response no body");
+        }
         if(statusCode >= 200 && statusCode < 300) {
             if(response.body() == null || response.body().isEmpty()) {
                 return null;

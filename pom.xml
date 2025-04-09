@@ -36,8 +36,8 @@
 		<maven-dependency-plugin.version>3.8.1</maven-dependency-plugin.version>
 
 		<!-- Other dependency versions -->
-		<org.apache.logging.log4j.log4j-core.version>2.24.0</org.apache.logging.log4j.log4j-core.version>
-		<org.apache.logging.log4j.log4j-api.version>2.24.0</org.apache.logging.log4j.log4j-api.version>
+		<org.apache.logging.log4j.log4j-core.version>2.24.3</org.apache.logging.log4j.log4j-core.version>
+		<org.apache.logging.log4j.log4j-api.version>2.24.3</org.apache.logging.log4j.log4j-api.version>
 		<com.fasterxml.jackson.core.jackson-databind.version>2.18.3</com.fasterxml.jackson.core.jackson-databind.version>
 		<com.fasterxml.jackson.datatype.jackson-datatype-jsr310.version>2.18.3</com.fasterxml.jackson.datatype.jackson-datatype-jsr310.version>
 		<org.xerial.sqlite-jdbc.version>3.49.1.0</org.xerial.sqlite-jdbc.version>
@@ -157,7 +157,8 @@
 											<directory>
 												${workspace.root}/${scripts.dir.name}</directory>
 											<includes>
-												<include>start-${project.name}.bat</include>
+												<include>
+													start-${project.name}.bat</include>
 											</includes>
 										</resource>
 									</resources>
@@ -170,10 +171,12 @@
 									<goal>copy-resources</goal>
 								</goals>
 								<configuration>
-									<outputDirectory>${workspace.root}/${release.dir.name}/${project.name}/config</outputDirectory>
+									<outputDirectory>
+										${workspace.root}/${release.dir.name}/${project.name}/config</outputDirectory>
 									<resources>
 										<resource>
-											<directory>${project.basedir}/src/main/resources/config</directory>
+											<directory>
+												${project.basedir}/src/main/resources/config</directory>
 											<includes>
 												<include>**/*</include>
 											</includes>
@@ -240,6 +243,17 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+		</dependency>
+	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
