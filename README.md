@@ -247,8 +247,8 @@ Below are examples of HTTP requests and responses for key operations in the Go B
 - **Audit Log**:
   ```plaintext
   [2025-04-09T13:34:51.654: UPDATE] Debited funds from account id: 24a766e4, amount: 1.0
-[2025-04-09T13:34:51.665: UPDATE] Credit funds to account id: ad75b1c7, amount: 1.0
-[2025-04-09T13:34:51.669: UPDATE] Balance Operation TRANSFER saved, Transferred funds from account id: 24a766e4 to account id: ad75b1c7, amount: 1.0
+  [2025-04-09T13:34:51.665: UPDATE] Credit funds to account id: ad75b1c7, amount: 1.0
+  [2025-04-09T13:34:51.669: UPDATE] Balance Operation TRANSFER saved, Transferred funds from account id: 24a766e4 to account id: ad75b1c7, amount: 1.0
 
 ### Interest Management
 #### Configure Interest Daily Rate
