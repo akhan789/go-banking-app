@@ -11,6 +11,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.sun.net.httpserver.HttpExchange;
 
 /**
@@ -22,6 +25,7 @@ import com.sun.net.httpserver.HttpExchange;
  */
 public class HttpClientService {
 
+    private static final Logger LOG = LogManager.getLogger(HttpClientService.class);
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     public HttpClientService() {
@@ -36,7 +40,9 @@ public class HttpClientService {
                 requestBuilder.header(key, headers.get(key));
             });
         }
-        return HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString()).body();
+        HttpRequest request = requestBuilder.build();
+        LOG.info("Sending request: " + request);
+        return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
     }
 
     public String post(Map<String, String> headers, String url, String body) throws Exception {
@@ -48,7 +54,9 @@ public class HttpClientService {
                 requestBuilder.header(key, headers.get(key));
             });
         }
-        return HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString()).body();
+        HttpRequest request = requestBuilder.build();
+        LOG.info("Sending request: " + request + ": " + body);
+        return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
     }
 
     public void postAsync(Map<String, String> headers, String url, String body) {
@@ -60,7 +68,9 @@ public class HttpClientService {
                 requestBuilder.header(key, headers.get(key));
             });
         }
-        HTTP_CLIENT.sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+        HttpRequest request = requestBuilder.build();
+        LOG.info("Sending request: " + request + ": " + body);
+        HTTP_CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString());
     }
 
     public String put(Map<String, String> headers, String url, String body) throws Exception {
@@ -72,7 +82,9 @@ public class HttpClientService {
                 requestBuilder.header(key, headers.get(key));
             });
         }
-        return HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString()).body();
+        HttpRequest request = requestBuilder.build();
+        LOG.info("Sending request: " + request + ": " + body);
+        return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
     }
 
     public static void sendResponse(HttpExchange exchange, int status, String response) throws IOException {
@@ -82,11 +94,19 @@ public class HttpClientService {
             exchange.sendResponseHeaders(status, -1);
             return;
         }
+        String requestURL = exchange.getRequestURI().toString();
         byte[] bytes = (response != null) ? response.getBytes(StandardCharsets.UTF_8) : new byte[0];
-        exchange.sendResponseHeaders(status, bytes.length);
-        try(OutputStream os = exchange.getResponseBody()) {
-            os.write(bytes);
+        if(bytes.length != 0) {
+            String responseBody = new String(bytes, StandardCharsets.UTF_8);
+            LOG.info("Sending response for request: " + requestURL + ": " + responseBody);
+            exchange.sendResponseHeaders(status, bytes.length);
+            try(OutputStream os = exchange.getResponseBody()) {
+                os.write(bytes);
+            }
+        }
+        else {
+            LOG.info("Sending response for request: " + requestURL);
+            exchange.sendResponseHeaders(status, -1);
         }
     }
-
 }
