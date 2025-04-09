@@ -84,8 +84,8 @@ public class GoBankingApplicationUI extends JFrame {
     }
 
     private void showAboutDialog() {
-        JOptionPane.showMessageDialog(this, "Go Banking App\nVersion 0.0.1-SNAPSHOT\n\nDeveloped by Abid Khan.",
-                "About", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Go Banking App\nVersion 25.0.0.0\n\nDeveloped by Abid Khan.", "About",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void cleanup() {

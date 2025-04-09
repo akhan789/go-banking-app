@@ -19,8 +19,11 @@
 	</modules>
 
 	<properties>
-		<revision>0.0.1-SNAPSHOT</revision>
+		<major.version>25</major.version>
+		<minor.version>0</minor.version>
+		<patch.version>0</patch.version>
 		<build.number>0</build.number>
+		<revision>${major.version}.${minor.version}.${patch.version}.${build.number}</revision>
 		<workspace.root>..</workspace.root>
 		<release.dir.name>_release</release.dir.name>
 		<jre.dir.name>_jre</jre.dir.name>
@@ -75,7 +78,7 @@
 								<configuration>
 									<filesets>
 										<fileset>
-											<directory>${release.dir.name}</directory>
+											<directory>${workspace.root}/${release.dir.name}</directory>
 										</fileset>
 									</filesets>
 								</configuration>

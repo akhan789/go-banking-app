@@ -11,6 +11,7 @@ This project is developed in Java as part of the Payter Technical Assessment. It
 - [Modules](#modules)
 - [Getting Started](#getting-started)
 - [Technologies Used](#technologies-used)
+- [GUI User Guide](#gui-user-guide)
 - [Request/Response Examples](#requestresponse-examples)
 
 ---
@@ -57,6 +58,12 @@ Each module in the repository has a distinct responsibility:
 - **Modular Architecture** – Clean separation of service responsibilities
 
 > 💡 *This application is designed for simulation and demonstration purposes. It does not persist data and is not production-ready.*
+
+---
+
+## 🖱️ GUI User Guide
+
+For instructions on how to use the Java Swing-based GUI, please see the [GUI User Guide](_documentation/GUI-User-Guide.md).
 
 ---
 
