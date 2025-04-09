@@ -28,8 +28,10 @@ public class AuditLoggingView extends AbstractView {
     private ScheduledExecutorService scheduler;
     private boolean isServiceOffline = false;
     private long lastPollTime = 0;
+    private static final boolean POLLING_ENABLED = Boolean
+            .valueOf(ConfigUtil.loadProperty("service.auditlogging.polling.enabled", "true")).booleanValue();
     private static final long MIN_POLL_INTERVAL_MS = Long
-            .valueOf(ConfigUtil.loadProperty("service.auditlogging.polling.milliseconds", "5000")); // Minimum 5 seconds between polls when offline
+            .valueOf(ConfigUtil.loadProperty("service.auditlogging.polling.milliseconds", "5000"));
 
     public AuditLoggingView(AuditLoggingViewModel auditLogVM) {
         this.auditLoggingVM = auditLogVM;
@@ -38,7 +40,9 @@ public class AuditLoggingView extends AbstractView {
         JScrollPane scrollPane = new JScrollPane(logArea);
         this.auditLoggingVM.setAuditLogArea(logArea);
         add(scrollPane, BorderLayout.CENTER);
-        startPolling();
+        if(POLLING_ENABLED) {
+            startPolling();
+        }
     }
 
     private void startPolling() {

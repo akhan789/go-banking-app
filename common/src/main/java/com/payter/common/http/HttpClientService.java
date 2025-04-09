@@ -41,7 +41,7 @@ public class HttpClientService {
             });
         }
         HttpRequest request = requestBuilder.build();
-        LOG.info("Sending request: " + request);
+        LOG.info("Sending request (no body): headers: " + request.headers() + ": " + request);
         return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
     }
 
@@ -55,7 +55,8 @@ public class HttpClientService {
             });
         }
         HttpRequest request = requestBuilder.build();
-        LOG.info("Sending request: " + request + ": " + body);
+        LOG.info("Sending request: headers: " + request.headers() + ": " + request + ": "
+                + (body != null && !body.isEmpty() ? body : "<no body>"));
         return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
     }
 
@@ -69,7 +70,8 @@ public class HttpClientService {
             });
         }
         HttpRequest request = requestBuilder.build();
-        LOG.info("Sending request: " + request + ": " + body);
+        LOG.info("Sending request: headers: " + request.headers() + ": " + request + ": "
+                + (body != null && !body.isEmpty() ? body : "<no body>"));
         HTTP_CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString());
     }
 
@@ -83,7 +85,8 @@ public class HttpClientService {
             });
         }
         HttpRequest request = requestBuilder.build();
-        LOG.info("Sending request: " + request + ": " + body);
+        LOG.info("Sending request: headers: " + request.headers() + ": " + request + ": "
+                + (body != null && !body.isEmpty() ? body : "<no body>"));
         return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
     }
 
