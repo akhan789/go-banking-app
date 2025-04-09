@@ -11,7 +11,6 @@ This project is developed in Java as part of the Payter Technical Assessment. It
 - [Modules](#modules)
 - [Getting Started](#getting-started)
 - [Technologies Used](#technologies-used)
-- [License](#license)
 
 ---
 
